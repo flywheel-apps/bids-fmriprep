@@ -1,0 +1,151 @@
+{
+  "name": "bids-fmriprep",
+  "label": "editme",
+  "description": "Template for a gear to work on on BIDS formatted data.",
+  "version": "0.0.0_0.0.0",
+  "custom": {
+    "docker-image": "flywheel/bids-fmriprep:0.0.0_0.0.0",
+    "gear-builder": {
+      "category": "analysis",
+      "image": "flywheel/bids-fmriprep:0.0.0_0.0.0"
+    },
+    "flywheel": {
+      "suite": "BIDS Apps"
+    },
+    "license": {
+      "non-commercial-use-only": true,
+      "main": {
+        "name": "BSD-3-Clause",
+        "url": "https://github.com/poldracklab/mriqc/blob/0.15.1/LICENSE.txt"
+      },
+      "dependencies": [
+        {
+          "name": "Other",
+          "url": "https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Licence"
+        },
+        {
+          "name": "Other",
+          "url": "https://github.com/ANTsX/ANTs/blob/v2.2.0/COPYING.txt"
+        },
+        {
+          "name": "Other",
+          "url": "https://afni.nimh.nih.gov/pub/dist/doc/program_help/README.copyright.html"
+        }
+      ]
+    }
+  },
+  "inputs": {
+    "key": {
+      "base": "api-key",
+      "read-only": true
+    }
+  },
+  "config": {
+    "bool-param": {
+      "default": false,
+      "description": "some yes or no choice",
+      "type": "boolean"
+    },
+    "num-things": {
+      "default": 1,
+      "description": "number of things that is important to set",
+      "type": "integer"
+    },
+    "name-or-something": {
+      "description": "path to JSON file with settings",
+      "optional": true,
+      "type": "string"
+    },
+    "threshold": {
+      "default": 3.1415926,
+      "description": "threshold eating pie",
+      "type": "number"
+    },
+    "modalities": {
+      "description": "T1w|bold|T2w",
+      "enum": [
+        "",
+        "T1w",
+        "bold",
+        "T2w"
+      ],
+      "optional": true,
+      "type": "string"
+    },
+    "n_procs": {
+      "default": 1,
+      "description": "number of threads",
+      "type": "integer"
+    },
+    "run-id": {
+      "description": "[RUN_ID [RUN_ID ...]]",
+      "optional": true,
+      "type": "string"
+    },
+    "task-id": {
+      "description": "[TASK_ID [TASK_ID ...]]",
+      "optional": true,
+      "type": "string"
+    },
+    "verbose": {
+      "default": "v",
+      "description": "increases log verbosity for each occurence, debug level is -vvv",
+      "enum": [
+        "",
+        "v",
+        "vv",
+        "vvv"
+      ],
+      "type": "string"
+    },
+    "write-graph": {
+      "default": false,
+      "description": "Write workflow graph",
+      "type": "boolean"
+    },
+    "gear-abort-on-bids-error": {
+      "default": false,
+      "description": "Gear will not run if there are any BIDS errors detected",
+      "type": "boolean"
+    },
+    "gear-log-level": {
+      "default": "INFO",
+      "description": "Gear Log verbosity level (ERROR|WARNING|INFO|DEBUG)",
+      "type": "string",
+                        "enum": [
+                                "ERROR",
+                                "WARNING",
+                                "INFO",
+                                "DEBUG"
+                        ]
+    },
+    "gear-run-bids-validation": {
+      "default": true,
+      "description": "Gear will run BIDS validation before mriqc.  If validation fails and gear-abort-on-bids-error is true, mriq will NOT be run.",
+      "type": "boolean"
+    },
+    "gear-save-all-output": {
+      "default": false,
+      "description": "Gear will save ALL intermediate output into <command>_work.zip",
+      "type": "boolean"
+    }
+  },
+  "environment": {
+    "PYTHON_PIP_VERSION": "19.2.1",
+    "HOME": "/root",
+    "GPG_KEY": "0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D",
+    "PYTHON_GET_PIP_URL": "https://github.com/pypa/get-pip/raw/404c9418e33c5031b1a9ab623168b3e8a2ed8c88/get-pip.py",
+    "PATH": "/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "LANG": "C.UTF-8",
+    "PYTHON_VERSION": "3.7.4",
+    "PWD": "/",
+    "PYTHON_GET_PIP_SHA256": "56bb63d3cf54e7444351256f72a60f575f6d8c7f1faacffae33167afc8e7609d"
+  },
+  "command": "python run.py",
+  "author": "Dr. Smartypants, Whatsamatter U",
+  "maintainer": "Flywheel <support@flywheel.io>",
+  "cite": "Dewy, Cheetum, and How; The templatest BIDS app you will ever see; PLOS ONE 12(9):e0184661; doi:10.1371/journal.pone.0184661.",
+  "license": "MIT",
+  "source": "https://github.com/flywheel-apps/bids-fmriprep",
+  "url": "https://github.com/flywheel-apps/bids-fmriprep"
+}
