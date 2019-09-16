@@ -1,6 +1,6 @@
 # editme: change this file as needed
 # Use the latest Python 3 docker image
-FROM python:3 as base
+FROM poldracklab/fmriprep:1.5.0
 
 MAINTAINER Flywheel <support@flywheel.io>
 

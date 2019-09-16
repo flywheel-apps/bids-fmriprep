@@ -41,6 +41,25 @@ def make_session_directory(context):
 
 
 def build(context):
+    """
+    Process inputs, contextual values and build a dictionary of
+    key:value command-line parameter names:values These will be
+    validated and assembled into a command-line below.  
+    """
+ 
+    # 1) Process Inputs
+    # Check if the required FreeSurfer license file has been provided
+    # as an input file.
+    fs_license_file = context.get_input_path('freesurfer_license')
+
+    if fs_license_file:
+
+        shutil.copy(fs_license_file, '/opt/freesurfer/license.txt')
+
+    # 2) Process Contextual values
+    # e.g. context.matlab_license_code
+
+    # 3) Process Configuration (config, rest of command-line parameters)
     config = context.config
     params = {}
     for key in config.keys():

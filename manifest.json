@@ -1,13 +1,13 @@
 {
   "name": "bids-fmriprep",
-  "label": "editme",
-  "description": "Template for a gear to work on on BIDS formatted data.",
-  "version": "0.0.0_0.0.0",
+  "label": "fMRIPrep: A Robust Preprocessing Pipeline for fMRI Data",
+  "description": "fMRIPrep (1.5.0 September 9, 2019) is a functional magnetic resonance imaging (fMRI) data preprocessing pipeline that is designed to provide an easily accessible, state-of-the-art interface that is robust to variations in scan acquisition protocols and that requires minimal user input, while providing easily interpretable and comprehensive error and output reporting. It performs basic processing steps (coregistration, normalization, unwarping, noise component extraction, segmentation, skullstripping etc.) providing outputs that can be easily submitted to a variety of group level analyses, including task-based or resting-state fMRI, graph theory measures, surface or volume-based statistics, etc.",
+  "version": "0.0.0_1.5.0",
   "custom": {
-    "docker-image": "flywheel/bids-fmriprep:0.0.0_0.0.0",
+    "docker-image": "flywheel/bids-fmriprep:0.0.0_1.5.0",
     "gear-builder": {
       "category": "analysis",
-      "image": "flywheel/bids-fmriprep:0.0.0_0.0.0"
+      "image": "flywheel/bids-fmriprep:0.0.0_1.5.0"
     },
     "flywheel": {
       "suite": "BIDS Apps"
@@ -16,9 +16,13 @@
       "non-commercial-use-only": true,
       "main": {
         "name": "BSD-3-Clause",
-        "url": "https://github.com/poldracklab/mriqc/blob/0.15.1/LICENSE.txt"
+        "url": "https://github.com/poldracklab/fmriprep/blob/master/LICENSE"
       },
       "dependencies": [
+        {
+          "name": "Other",
+          "url": "https://fmriprep.readthedocs.io/en/stable/citing.html"
+        },
         {
           "name": "Other",
           "url": "https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Licence"
@@ -30,6 +34,10 @@
         {
           "name": "Other",
           "url": "https://afni.nimh.nih.gov/pub/dist/doc/program_help/README.copyright.html"
+        },
+        {
+          "name": "Other",
+          "url": "https://github.com/freesurfer/freesurfer/blob/dev/LICENSE.txt"
         }
       ]
     }
@@ -38,54 +46,55 @@
     "key": {
       "base": "api-key",
       "read-only": true
+    },
+    "freesurfer_license": {
+      "description": "FreeSurfer license file, provided during registration with FreeSurfer. This file will by copied to the $FSHOME directory and used during execution of the Gear.",
+      "base": "file",
+      "optional": true
     }
   },
   "config": {
-    "bool-param": {
+    "skip-bids-validation": {
       "default": false,
-      "description": "some yes or no choice",
+      "description": "assume the input dataset is BIDS compliant and skip the validation",
       "type": "boolean"
     },
-    "num-things": {
-      "default": 1,
-      "description": "number of things that is important to set",
-      "type": "integer"
-    },
-    "name-or-something": {
-      "description": "path to JSON file with settings",
+    "task-id": {
+      "description": "select a specific task to be processed",
       "optional": true,
       "type": "string"
     },
-    "threshold": {
-      "default": 3.1415926,
-      "description": "threshold eating pie",
+    "echo-idx": {
+      "description": "select a specific echo to be processed in a multiecho series",
+      "optional": true,
+      "type": "string"
+    },
+    "nthreads": {
+      "default": 1,
+      "description": "maximum number of threads across all processes",
+      "optional": true,
+      "type": "integer"
+    },
+    "omp-nthreads": {
+      "default": 1,
+      "description": "maximum number of threads per-process",
+      "optional": true,
+      "type": "integer"
+    },
+    "mem_mb": {
+      "default": 1,
+      "description": "upper bound memory limit for FMRIPREP processes",
       "type": "number"
     },
-    "modalities": {
-      "description": "T1w|bold|T2w",
-      "enum": [
-        "",
-        "T1w",
-        "bold",
-        "T2w"
-      ],
-      "optional": true,
-      "type": "string"
+    "boilerplate": {
+      "default": false,
+      "description": "generate boilerplate only",
+      "type": "boolean"
     },
-    "n_procs": {
-      "default": 1,
-      "description": "number of threads",
-      "type": "integer"
-    },
-    "run-id": {
-      "description": "[RUN_ID [RUN_ID ...]]",
-      "optional": true,
-      "type": "string"
-    },
-    "task-id": {
-      "description": "[TASK_ID [TASK_ID ...]]",
-      "optional": true,
-      "type": "string"
+    "error-on-aroma-warnings": {
+      "default": false,
+      "description": "Raise an error if ICA_AROMA does not produce sensible output (e.g., if all the components are classified as signal or noise)",
+      "type": "boolean"
     },
     "verbose": {
       "default": "v",
@@ -98,9 +107,162 @@
       ],
       "type": "string"
     },
+    "ignore": {
+      "description": "Ignore selected aspects of the input dataset to disable corresponding parts of the workflow (a space delimited list)  Possible choices: fieldmaps, slicetiming, sbref",
+      "optional": true,
+      "type": "string"
+    },
+    "longitudinal": {
+      "default": false,
+      "description": "treat dataset as longitudinal - may increase runtime",
+      "type": "boolean"
+    },
+    "t2s-coreg": {
+      "default": false,
+      "description": "If provided with multi-echo BOLD dataset, create T2*-map and perform T2*-driven coregistration. When multi-echo data is provided and this option is not enabled, standard EPI-T1 coregistration is performed using the middle echo.",
+      "type": "boolean"
+    },
+    "output-spaces": {
+      "description": "Standard and non-standard spaces to resample anatomical and functional images to. Standard spaces may be specified by the form <TEMPLATE>[:res-<resolution>][:cohort-<label>][...], where <TEMPLATE> is a keyword (valid keywords: “MNI152Lin”, “MNI152NLin2009cAsym”, “MNI152NLin6Asym”, “MNI152NLin6Sym”, “MNIInfant”, “MNIPediatricAsym”, “NKI”, “OASIS30ANTs”, “PNC”, “fsLR”, “fsaverage”) or path pointing to a user-supplied template, and may be followed by optional, colon-separated parameters. Non-standard spaces (valid keywords: anat, T1w, run, func, sbref, fsnative) imply specific orientations and sampling grids. Important to note, the res-* modifier does not define the resolution used for the spatial normalization. For further details, please check out https://fmriprep.readthedocs.io/en/1.5.0/spaces.html",
+      "optional": true,
+      "type": "string"
+    },
+    "bold2t1w-dof": {
+      "description": "Degrees of freedom when registering BOLD to T1w images. 6 degrees (rotation and translation) are used by default.",
+      "enum": [
+        "",
+        "6",
+        "9",
+        "12"
+      ],
+      "optional": true,
+      "type": "string"
+    },
+    "force-bbr": {
+      "default": false,
+      "description": "Always use boundary-based registration (no goodness-of-fit checks)",
+      "type": "boolean"
+    },
+    "force-no-bbr": {
+      "default": false,
+      "description": "Do not use boundary-based registration (no goodness-of-fit checks)",
+      "type": "boolean"
+    },
+    "medial-surface-nan": {
+      "default": false,
+      "description": "Replace medial wall values with NaNs on functional GIFTI files. Only performed for GIFTI files mapped to a freesurfer subject (fsaverage or fsnative).",
+      "type": "boolean"
+    },
+    "dummy-scans": {
+      "default": 1,
+      "description": "Number of non steady state volumes.",
+      "optional": true,
+      "type": "integer"
+    },
+    "aroma-melodic-dimensionality": {
+      "default": 1,
+      "description": "number of things that is important to set",
+      "optional": true,
+      "type": "integer"
+    },
+    "return-all-components": {
+      "default": false,
+      "description": "Include all components estimated in CompCor decomposition in the confounds file instead of only the components sufficient to explain 50 percent of BOLD variance in each CompCor mask",
+      "type": "boolean"
+    },
+    "fd-spike-threshold": {
+      "description": "Threshold for flagging a frame as an outlier on the basis of framewise displacement",
+      "optional": true,
+      "type": "number"
+    },
+    "dvars-spike-threshold": {
+      "description": "Threshold for flagging a frame as an outlier on the basis of standardised DVARS",
+      "optional": true,
+      "type": "number"
+    },
+    "skull-strip-template": {
+      "description": "select a template for skull-stripping with antsBrainExtraction",
+      "enum": [
+        "",
+        "OASIS",
+        "NKI"
+      ],
+      "optional": true,
+      "type": "string"
+    },
+    "skull-strip-fixed-seed": {
+      "default": false,
+      "description": "do not use a random seed for skull-stripping - will ensure run-to-run replicability when used with –omp-nthreads 1",
+      "type": "boolean"
+    },
+    "fmap-bspline": {
+      "default": false,
+      "description": "fit a B-Spline field using least-squares (experimental)",
+      "type": "boolean"
+    },
+    "fmap-no-demean": {
+      "default": false,
+      "description": "do not remove median (within mask) from fieldmap",
+      "type": "boolean"
+    },
+    "use-syn-sdc": {
+      "default": false,
+      "description": "EXPERIMENTAL: Use fieldmap-free distortion correction",
+      "type": "boolean"
+    },
+    "force-syn": {
+      "default": false,
+      "description": "EXPERIMENTAL/TEMPORARY: Use SyN correction in addition to fieldmap correction, if available",
+      "type": "boolean"
+    },
+    "fs-license-file": {
+      "description": "Path to FreeSurfer license key file. Get it (for free) by registering at https://surfer.nmr.mgh.harvard.edu/registration.html",
+      "optional": true,
+      "type": "string"
+    },
+    "no-submm-recon": {
+      "default": false,
+      "description": "disable sub-millimeter (hires) reconstruction",
+      "type": "boolean"
+    },
+    "cifti-output": {
+      "default": false,
+      "description": "output BOLD files as CIFTI dtseries",
+      "type": "boolean"
+    },
+    "fs-no-reconall": {
+      "default": false,
+      "description": "disable FreeSurfer surface preprocessing",
+      "type": "boolean"
+    },
+    "resource-monitor": {
+      "default": false,
+      "description": "enable Nipype’s resource monitoring to keep track of memory and CPU usage",
+      "type": "boolean"
+    },
+    "reports-only": {
+      "default": false,
+      "description": "",
+      "type": "boolean"
+    },
+    "run-uuid": {
+      "description": "Specify UUID of previous run, to include error logs in report. No effect without –reports-only",
+      "optional": true,
+      "type": "string"
+    },
     "write-graph": {
       "default": false,
       "description": "Write workflow graph",
+      "type": "boolean"
+    },
+    "stop-on-first-crash": {
+      "default": false,
+      "description": "Force stopping on first crash, even if a work directory was specified",
+      "type": "boolean"
+    },
+    "notrack": {
+      "default": false,
+      "description": "Opt-out of sending tracking information of this run to the FMRIPREP developers. This information helps to improve FMRIPREP and provides an indicator of real world usage crucial for obtaining funding",
       "type": "boolean"
     },
     "gear-abort-on-bids-error": {
@@ -128,24 +290,20 @@
       "default": false,
       "description": "Gear will save ALL intermediate output into <command>_work.zip",
       "type": "boolean"
+    },
+    "FREESURFER_LICENSE": {
+      "description": "Text from license file generated during FreeSurfer registration. *Entries should be space separated*",
+      "type": "string",
+      "optional": true
     }
   },
   "environment": {
-    "PYTHON_PIP_VERSION": "19.2.1",
-    "HOME": "/root",
-    "GPG_KEY": "0D96DF4D4110E5C43FBFB17F2D347EA6AA65421D",
-    "PYTHON_GET_PIP_URL": "https://github.com/pypa/get-pip/raw/404c9418e33c5031b1a9ab623168b3e8a2ed8c88/get-pip.py",
-    "PATH": "/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-    "LANG": "C.UTF-8",
-    "PYTHON_VERSION": "3.7.4",
-    "PWD": "/",
-    "PYTHON_GET_PIP_SHA256": "56bb63d3cf54e7444351256f72a60f575f6d8c7f1faacffae33167afc8e7609d"
   },
   "command": "python run.py",
-  "author": "Dr. Smartypants, Whatsamatter U",
+  "author": "Poldrack lab, Stanford University",
   "maintainer": "Flywheel <support@flywheel.io>",
-  "cite": "Dewy, Cheetum, and How; The templatest BIDS app you will ever see; PLOS ONE 12(9):e0184661; doi:10.1371/journal.pone.0184661.",
-  "license": "MIT",
+  "cite": "see https://fmriprep.readthedocs.io/en/stable/citing.html",
+  "license": "BSD-3-Clause",
   "source": "https://github.com/flywheel-apps/bids-fmriprep",
-  "url": "https://github.com/flywheel-apps/bids-fmriprep"
+  "url": "https://github.com/flywheel-apps/bids-fmriprep/blob/master/README.md"
 }

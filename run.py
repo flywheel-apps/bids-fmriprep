@@ -13,6 +13,7 @@ import flywheel
 from utils import args, bids, results
 from utils.log import get_custom_logger
 
+
 if __name__ == '__main__':
     # Instantiate the Gear Context
     context = flywheel.GearContext()
@@ -38,10 +39,6 @@ if __name__ == '__main__':
         context.gear_dict['environ'] = environ
 
     try:
-        # editme: for debugging:
-        if context.destination['id'] == 'aex':
-            # give it the tome session
-            context.destination['id']='5d2761383289d60037e8b180'
 
         # Download bids for the current session
         bids.download(context)
@@ -65,15 +62,10 @@ if __name__ == '__main__':
         os.sys.exit(1)
 
     try:
-        # editme: optional feature
-        # Create working output directory with session label as name
-        args.make_session_directory(context)
 
-        # editme: this is the actual command to run the gear
-        context.gear_dict['command'] = ['echo']
-        context.gear_dict['command'].append(
-            op.join(context.work_dir,context.gear_dict['session_label'])
-        )
+        # The actual command to run the gear:
+        context.gear_dict['command'] = ['fmriprep']
+
         # Build a parameter dictionary specific for COMMAND
         args.build(context)
 
