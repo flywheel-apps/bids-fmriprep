@@ -1,7 +1,9 @@
 # If you edit this file, please consider updating bids-app-template
+
 import subprocess as sp
 import os, os.path as op
 import re
+import shutil
 
 
 def make_session_directory(context):
@@ -50,11 +52,44 @@ def build(context):
     # 1) Process Inputs
     # Check if the required FreeSurfer license file has been provided
     # as an input file.
+    fs_license_path = '/opt/freesurfer/license.txt'
+    context.gear_dict['fs_license_found'] = False
+    license_info = ''
+
     fs_license_file = context.get_input_path('freesurfer_license')
-
     if fs_license_file:
+        # just copy the file to the right place
+        shutil.copy(fs_license_file, fs_license_path)
+        context.gear_dict['fs_license_found'] = True
+        context.log.info('Using FreeSurfer license in input file.')
 
-        shutil.copy(fs_license_file, '/opt/freesurfer/license.txt')
+    if not context.gear_dict['fs_license_found']:
+        # see if it was passed as a string argument
+        if context.config.get('gear-FREESURFER_LICENSE'):
+            fs_arg = context.config['gear-FREESURFER_LICENSE']
+            license_info = '\n'.join(fs_arg.split())
+            context.gear_dict['fs_license_found'] = True
+            context.log.info('Using FreeSurfer license in gear argument.')
+
+    if not context.gear_dict['fs_license_found']:
+        # see if it was passed as a string argument
+        project_id = fw.get_analysis(config['destination']['id']).parents.project
+        project = fw.get_project(project_id)
+        if project.info.get('FREESURFER_LICENSE'):
+            license_info = '\n'.join(project.info.get('FREESURFER_LICENSE').split())
+            context.gear_dict['fs_license_found'] = True
+            context.log.info('Using FreeSurfer license in project info.')
+
+    if not context.gear_dict['fs_license_found']:
+        msg = 'Could not find FreeSurfer license in project info.'
+        print(msg)
+        context.log.exception(msg)
+
+    else:
+        if license_info != '':
+            with open(fs_license_path, 'w') as lf:
+                lf.write(license_info)
+
 
     # 2) Process Contextual values
     # e.g. context.matlab_license_code

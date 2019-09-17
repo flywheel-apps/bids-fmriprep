@@ -291,7 +291,7 @@
       "description": "Gear will save ALL intermediate output into <command>_work.zip",
       "type": "boolean"
     },
-    "FREESURFER_LICENSE": {
+    "gear-FREESURFER_LICENSE": {
       "description": "Text from license file generated during FreeSurfer registration. *Entries should be space separated*",
       "type": "string",
       "optional": true
