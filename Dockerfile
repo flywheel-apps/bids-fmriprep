@@ -16,9 +16,10 @@ RUN apt-get update && \
 RUN npm install -g bids-validator@1.3.0
 
 RUN pip install flywheel-sdk==9.0.2 \
-        flywheel-bids==0.8.0 \
+        flywheel-bids==0.8.0 && \
         psutil==5.6.3 && \
     rm -rf /var/lib/apt/lists/*
+
 # The last line above is to help keep the docker image smaller
 
 # Save docker environ

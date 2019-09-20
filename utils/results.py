@@ -2,7 +2,11 @@
 import datetime
 import glob
 import os, os.path as op
+import logging
 import subprocess as sp
+
+
+log = logging.getLogger(__name__)
 
 
 def zip_it_zip_it_good(context, name):
@@ -10,15 +14,15 @@ def zip_it_zip_it_good(context, name):
         *.html.zip files are automatically shown in another tab in the browser """
 
     cmd = 'zip -q ' + name + '.zip index.html'
-    context.log.debug(' creating viewable archive "' + name + '.zip"')
+    log.debug(' creating viewable archive "' + name + '.zip"')
     result = sp.run(cmd, shell=True, stdout=sp.PIPE, stderr=sp.PIPE, encoding='utf-8')
     if result.returncode != 0:
-        context.log.info(' Problem running ' + cmd)
-        context.log.info(' return code: ' + str(result.returncode))
-        context.log.info(' ' + cmd.split()[0] + ' output\n' + str(result.stdout))
+        log.info(' Problem running ' + cmd)
+        log.info(' return code: ' + str(result.returncode))
+        log.info(' ' + cmd.split()[0] + ' output\n' + str(result.stdout))
     else:
-        context.log.debug(' return code: ' + str(result.returncode))
-        context.log.debug(' ' + cmd.split()[0] + ' output\n' + str(result.stdout))
+        log.debug(' return code: ' + str(result.returncode))
+        log.debug(' ' + cmd.split()[0] + ' output\n' + str(result.stdout))
 
 
 def zip_htmls(context):
@@ -28,7 +32,7 @@ def zip_htmls(context):
         archive from it.
     """
 
-    context.log.info(' Creating viewable archives for all html files')
+    log.info(' Creating viewable archives for all html files')
     os.chdir(context.output_dir)
 
     html_files = glob.glob('*.html')
@@ -66,7 +70,7 @@ def zip_all_htmls(context):
 
     if not op.exists('index.html'):  # create one if it does not exist
 
-        context.log.info(' Creating index.html')
+        log.info(' Creating index.html')
         os.chdir(context.output_dir)
 
         # the first part of index.html
@@ -106,11 +110,11 @@ def zip_all_htmls(context):
     # compress everything into an appropriately named archive file
     # *.html.zip file are automatically shown in another tab in the browser
     cmd = 'zip -q Command.html.zip *.html'
-    context.log.info(' creating viewable html archive "' + cmd + '"')
+    log.info(' creating viewable html archive "' + cmd + '"')
     result = sp.run(cmd, shell=True, stdout=sp.PIPE, stderr=sp.PIPE, encoding='utf-8')
     if result.returncode != 0:
-        context.log.info(' return code: ' + str(result.returncode))
-        context.log.info(' ' + cmd.split()[0] + ' output\n' + str(result.stdout))
+        log.info(' return code: ' + str(result.returncode))
+        log.info(' ' + cmd.split()[0] + ' output\n' + str(result.stdout))
 
 
 def zip_output(context):
@@ -126,7 +130,7 @@ def zip_output(context):
     dest_zip = op.join(context.output_dir,session_label + '.zip')
 
     if op.exists(op.join(context.work_dir,session_label)):
-        context.log.info(
+        log.info(
             'Zipping ' + session_label + ' directory to ' + dest_zip + '.'
         )
         # For results with a large number of files, provide a manifest.
@@ -140,7 +144,7 @@ def zip_output(context):
         command1 = ['zip', '-r', dest_zip, session_label]
         result1 = sp.run(command1, stdout=sp.PIPE, stderr=sp.PIPE)
     else:
-        context.log.info(
+        log.info(
             'No results directory, ' + \
             op.join(context.work_dir,session_label) + \
             ', to zip.'

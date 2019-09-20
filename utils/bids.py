@@ -1,8 +1,13 @@
 # If you edit this file, please consider updating bids-app-template
 import os, os.path as op
 import subprocess as sp
+import logging
 import json
 import pprint
+
+
+log = logging.getLogger(__name__)
+
 
 def download(context):
     """ Download all files from the session in BIDS format
@@ -35,7 +40,7 @@ def download(context):
         # platform instead of creating a generic stub?
         required_file = bids_path + '/dataset_description.json'
         if not op.exists(required_file):
-            context.log.info('Creating missing '+required_file+'.')
+            log.info('Creating missing '+required_file+'.')
             the_stuff = {
                 "Acknowledgements": "",
                 "Authors": [],
@@ -51,12 +56,12 @@ def download(context):
             with open(required_file, 'w') as outfile:
                 json.dump(the_stuff, outfile)
         else:
-            context.log.info(required_file+' exists.')
+            log.info(required_file+' exists.')
 
-        context.log.info('BIDS was downloaded into '+bids_path)
+        log.info('BIDS was downloaded into '+bids_path)
 
     else:
-        context.log.info('Using existing BIDS path '+bids_path)
+        log.info('Using existing BIDS path '+bids_path)
     
     context.gear_dict['bids_path'] = bids_path
 
@@ -80,23 +85,23 @@ def run_validation(context):
     if config['gear-run-bids-validation']:
 
         command = ['bids-validator', '--verbose', '--json', bids_path]
-        context.log.info('Command:' + ' '.join(command))
+        log.info('Command:' + ' '.join(command))
 
         out_path = "work/validator.output.txt"
         with open(out_path, "w") as f:
             result = sp.run(command, stdout=f, stderr=sp.PIPE,
                             universal_newlines=True, env=environ)
 
-        context.log.info(command[0]+' return code: ' + str(result.returncode))
+        log.info(command[0]+' return code: ' + str(result.returncode))
 
         if result.stderr:
-            context.log.error(result.stderr)
+            log.error(result.stderr)
 
         with open(out_path) as jfp:
             bids_output = json.load(jfp)
 
         # show summary of valid BIDS stuff
-        context.log.info('bids-validator results:\n\nValid BIDS files summary:\n' +
+        log.info('bids-validator results:\n\nValid BIDS files summary:\n' +
                  pprint.pformat(bids_output['summary'], indent=8) + '\n')
 
         num_bids_errors = len(bids_output['issues']['errors'])
@@ -107,7 +112,7 @@ def run_validation(context):
             for ff in err['files']:
                 if ff["file"]:
                     err_msg += '       ' + ff["file"]["relativePath"] + '\n'
-            context.log.error(err_msg)
+            log.error(err_msg)
 
         # show all warnings
         for warn in bids_output['issues']['warnings']:
@@ -115,7 +120,7 @@ def run_validation(context):
             for ff in warn['files']:
                 if ff["file"]:
                     warn_msg += '       ' + ff["file"]["relativePath"] + '\n'
-            context.log.warning(warn_msg)
+            log.warning(warn_msg)
 
         if config['gear-abort-on-bids-error'] and num_bids_errors > 0:
             raise Exception(' ' + str(num_bids_errors) + ' BIDS validation errors ' +
