@@ -9,39 +9,41 @@ import shutil
 
 log = logging.getLogger(__name__)
 
+
 def set_session_label(context):
-        # This is used by args.make_session_directory() and 
-        #                 results.zip_output()
 
-        # TODO will this work for a non-admin user?
+    # This is used by args.make_session_directory() and 
+    #                 results.zip_output()
 
-        fw = context.client
+    # TODO will this work for a non-admin user?
 
-        dest_container = fw.get(context.destination['id'])
+    fw = context.client
 
-        session_id = dest_container.get('session')
+    dest_container = fw.get(context.destination['id'])
 
-        if session_id is None:
-            session_id = dest_container.get('parents', {}).get('session')
+    session_id = dest_container.get('session')
 
-        # Kaleb says 
-        # TODO   Better to get the session information from
-        #        context.get_input()['hierarchy']['id'] for a specific input.
-        #        This also allows the template to accommodate inputs from different
-        #        sessions.
+    if session_id is None:
+        session_id = dest_container.get('parents', {}).get('session')
 
-        if session_id is None:
-            log.error('Cannot get session label from destination')
-            context.gear_dict['session_label'] = 'session_unknown'
+    # Kaleb says 
+    # TODO   Better to get the session information from
+    #        context.get_input()['hierarchy']['id'] for a specific input.
+    #        This also allows the template to accommodate inputs from different
+    #        sessions.
 
-        else:
-            session = fw.get(session_id)
-            session_label = re.sub('[^0-9a-zA-Z./]+', '_', session.label)
-            # attach session_label to gear_dict
-            context.gear_dict['session_label'] = session_label
+    if session_id is None:
+        log.error('Cannot get session label from destination')
+        context.gear_dict['session_label'] = 'session_unknown'
 
-        log.debug('Session label is "' + session_label + '" at debug level')
-        log.info('Session label is "' + session_label + '" at info level')
+    else:
+        session = fw.get(session_id)
+        session_label = re.sub('[^0-9a-zA-Z./]+', '_', session.label)
+        # attach session_label to gear_dict
+        context.gear_dict['session_label'] = session_label
+
+    log.debug('Session label is "' + session_label + '" at debug level')
+    log.info('Session label is "' + session_label + '" at info level')
 
 
 def make_session_directory(context):
@@ -50,9 +52,8 @@ def make_session_directory(context):
     of the algorithm.  This will keep the working output of the algorithm 
     separate from the bids input in work/bids.
     """
+
     try:
-
-
         # Create session_label in work directory
         session_dir = op.join(context.work_dir, 
                               context.gear_dict['session_label'])
@@ -72,6 +73,7 @@ def build(context):
     """
  
     # 1) Process Inputs
+
     # Check if the required FreeSurfer license file has been provided
     # as an input file.
     fs_license_path = '/opt/freesurfer/license.txt'
@@ -213,7 +215,7 @@ def build_command(context):
             # e.g. replace "--verbose=vvv' with '-vvv'
             command[-1] = '-' + param_list[key]
 
-    log.info(' Command:' + ' '.join(command))
+    log.info('Command:' + ' '.join(command))
 
     return command
 
@@ -223,6 +225,8 @@ def execute(context):
     command = build_command(context)
 
     environ = context.gear_dict['environ']
+
+    # Add environment to log
     kv = ''
     for k, v in environ.items():
         kv += k + '=' + v + ' '
@@ -240,7 +244,7 @@ def execute(context):
         result.stdout = ''
         result.stderr = 'gear-dry-run is set:  Did NOT run gear code.'
 
-    log.info('return code: ' + str(result.returncode))
+    log.info('Return code: ' + str(result.returncode))
     log.info('Command output:\n' + result.stdout)
 
     #if result.returncode != 0:

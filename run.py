@@ -15,7 +15,6 @@ import flywheel
 from utils import args, bids, results
 
 
-
 if __name__ == '__main__':
 
     log = logging.getLogger('[flywheel/bids-fmriprep]')
@@ -59,12 +58,9 @@ if __name__ == '__main__':
         environ = json.load(f)
         context.gear_dict['environ'] = environ
 
-    log.debug('before before args.set_session_label at DEBUG level')
-    log.info('before args.set_session_label at INFO log level')
     # Call this if args.make_session_directory() or results.zip_output() is
     # called later because they expect context.gear_dict['session_label']
     args.set_session_label(context)
-    log.info('after args.set_session_label')
 
     try:
 
@@ -94,8 +90,8 @@ if __name__ == '__main__':
         bids_path = context.gear_dict['bids_path']
         html_file = 'output/bids_tree'
         bids.tree(bids_path, html_file)
-        log.info('Wrote tree("' + bids_path + \
-                         '") output into html file "' + html_file + '.html')
+        log.info('Wrote tree("' + bids_path + '") output into html file "' +
+                         html_file + '.html')
 
         # editme: optional feature, but recommended!
         # Validate Bids file heirarchy
