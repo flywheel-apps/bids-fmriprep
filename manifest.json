@@ -135,6 +135,7 @@
         "fsLR",
         "fsaverage"
       ],
+      "optional": true,
       "type": "string"
     },
     "bold2t1w-dof": {
