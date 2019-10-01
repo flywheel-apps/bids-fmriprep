@@ -235,8 +235,7 @@ def execute(context):
     if not context.config['gear-dry-run']:
 
         # Run the actual command this gear was created for
-        result = sp.run(command, stdout=sp.PIPE, stderr=sp.PIPE,
-                    universal_newlines=True, env=environ)
+        result = sp.run(command, env=environ)
 
     else:
         result = sp.CompletedProcess
