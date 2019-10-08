@@ -108,13 +108,14 @@ if __name__ == '__main__':
         # Build command-line string for subprocess and execute
         result = args.execute(context)
 
-        log.info(result.stdout)
+        log.info('Return code: ' + str(result.returncode))
+        log.info('stdout = ' + str(result.stdout))
 
         if result.returncode == 0:
             log.info('Command successfully executed!')
 
         else:
-            log.error(result.stderr)
+            log.error('stderr = ' + str(result.stderr))
             log.info('Command failed.')
 
     except Exception as e:
@@ -124,16 +125,17 @@ if __name__ == '__main__':
 
     finally:
 
-        # editme: optional feature
-        # Cleanup, move all results to the output directory
-        # results.zip_htmls(context)
-
         # possibly save ALL intermediate output
         if context.config['gear-save-all-output']:
             results.zip_output(context)
 
+        try:
+            ret = result.returncode
+        except NameError:
+            ret = 1
+
         log.info('BIDS App Gear is done.')
-        os.sys.exit(result.returncode)
+        os.sys.exit(ret)
 
 
 # vi:set autoindent ts=4 sw=4 expandtab : See Vim, :help 'modeline'
