@@ -8,7 +8,6 @@ import shutil
 import json
 
 from .licenses.freesurfer import find_freesurfer_license
-from .fly.make_file_name_safe import *
 
 
 log = logging.getLogger(__name__)
