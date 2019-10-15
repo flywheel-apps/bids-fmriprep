@@ -2,140 +2,165 @@
 """ Run the gear: set up for and call command-line code """
 
 import json
-import os, os.path as op
+import os
 import subprocess as sp
 import sys
-import logging
-import psutil
 
 import flywheel
+from utils import args
+from utils.bids.download_bids import *
+from utils.bids.validate_bids import *
+from utils.fly.custom_log import *
+from utils.fly.load_manifest_json import *
+from utils.results.zip_output import *
 
-# GearContext takes care of most of these variables
-# from utils.G import *
-from utils import args, bids, results
 
+def initialize(context):
 
-if __name__ == '__main__':
+    # Add manifest.json as the manifest_json attribute
+    setattr(context, 'manifest_json', load_manifest_json())
 
-    log = logging.getLogger('[flywheel/bids-fmriprep]')
-
-    # Instantiate the Gear Context
-    context = flywheel.GearContext()
-    context.init_logging(context.config['gear-log-level'])
-
-    log.setLevel(context.config['gear-log-level'])
-    log.info('log level is ' + context.config['gear-log-level'])
-
-    # remove the standard handler so the format can be changed
-    logging.root.removeHandler(context.log.root.handlers[0])
-    # Timestamps with logging assist debugging algorithms
-    # With long execution times
-    handler = logging.StreamHandler(stream=sys.stdout)
-    format = '%(asctime)s %(levelname)8s %(name)-8s - %(message)s'
-    formatter = logging.Formatter(
-                fmt=format,
-                datefmt='%Y-%m-%d %H:%M:%S')
-    handler.setFormatter(formatter)
-    # replace root log handler
-    context.log.root.addHandler(handler)
+    log = custom_log(context)
 
     context.log_config() # not configuring the log but logging the config
 
     # Instantiate custom gear dictionary to hold "gear global" info
     context.gear_dict = {}
 
-    # editme: optional feature
-    # f-strings (e.g. f'string {variable}') are introduced in Python3.6
-    # for Python3.5 use ('string {}'.format(variable))
-    #log.debug('psutil.cpu_count()= '+str(psutil.cpu_count()))
-    #log.debug('psutil.virtual_memory().total= {:4.1f} GiB'.format(
-    #                  psutil.virtual_memory().total / (1024 ** 3)))
-    #log.debug('psutil.virtual_memory().available= {:4.1f} GiB'.format(
-    #                  psutil.virtual_memory().available / (1024 ** 3)))
+    # the usual BIDS path:
+    bids_path = os.path.join(context.work_dir, 'bids')
+    context.gear_dict['bids_path'] = bids_path
+
+    # Keep a list of errors to print all in one place at end
+    context.gear_dict['errors'] = []
 
     # grab environment for gear
     with open('/tmp/gear_environ.json', 'r') as f:
         environ = json.load(f)
         context.gear_dict['environ'] = environ
 
-    # Call this if args.make_session_directory() or results.zip_output() is
-    # called later because they expect context.gear_dict['session_label']
-    args.set_session_label(context)
+        # Add environment to log if debugging
+        kv = ''
+        for k, v in environ.items():
+            kv += k + '=' + v + ' '
+        log.debug('Environment: ' + kv)
 
+    return log
+
+
+def create_command(context, log):
+
+    # Create the command and validate the given arguments
     try:
 
-        # Set the actual command to run the gear:
-        context.gear_dict['command'] = ['fmriprep']
+        # editme: Set the actual gear command:
+        command = ['fmriprep']
 
-        # Build a parameter dictionary specific for COMMAND
-        args.build(context)
+        # This should be done here in case there are nargs='*' arguments
+        # These follow the BIDS Apps definition (https://github.com/BIDS-Apps)
+        command.append(context.gear_dict['bids_path'])
+        command.append(context.output_dir)
+        command.append('participant')
+
+        # Put command into gear_dict so arguments can be added in args.
+        context.gear_dict['command'] = command
+
+        # Process inputs, contextual values and build a dictionary of
+        # key-value arguments specific for COMMAND
+        args.get_inputs_and_args(context)
 
         # Validate the command parameter dictionary - make sure everything is 
         # ready to run so errors will appear before launching the actual gear 
         # code.  Raises Exception on fail
         args.validate(context)
 
-    except Exception as e:
-        log.critical(e,)
-        log.exception('Error in parameter specification.',)
-        os.sys.exit(1)
+        # Build final command-line (a list of strings)
+        command = args.build_command(context)
 
+    except Exception as e:
+        context.gear_dict['errors'].append(e)
+        log.critical(e,)
+        log.exception('Error in creating and validating command.',)
+
+
+def set_up_data(context, log):
+    # Set up and validate data to be used by command
     try:
 
         # Download bids for the current session
-        bids.download(context)
+        download_bids(context)
 
-        # editme: optional feature
-        # Save bids file hierarchy `tree` output in .html file
-        bids_path = context.gear_dict['bids_path']
-        html_file = 'output/bids_tree'
-        bids.tree(bids_path, html_file)
-        log.info('Wrote tree("' + bids_path + '") output into html file "' +
-                         html_file + '.html')
-
-        # editme: optional feature, but recommended!
         # Validate Bids file heirarchy
         # Bids validation on a phantom tree may be occuring soon
-        bids.run_validation(context)
+        validate_bids(context)
 
     except Exception as e:
+        context.gear_dict['errors'].append(e)
         log.critical(e,)
         log.exception('Error in BIDS download and validation.',)
-        os.sys.exit(1)
 
+
+def execute(context, log):
     try:
 
-        # Build command-line string for subprocess and execute
-        result = args.execute(context)
+        log.info('Command: ' + ' '.join(context.gear_dict['command']))
+
+        if not context.config['gear-dry-run']:
+
+            # Run the actual command this gear was created for
+            result = sp.run(context.gear_dict['command'], 
+                        env=context.gear_dict['environ'],
+                        stderr = sp.PIPE)
+
+        else:
+            result = sp.CompletedProcess
+            result.returncode = 1
+            result.stderr = 'gear-dry-run is set:  Did NOT run gear code.'
 
         log.info('Return code: ' + str(result.returncode))
-        log.info('stdout = ' + str(result.stdout))
 
         if result.returncode == 0:
             log.info('Command successfully executed!')
 
         else:
-            log.error('stderr = ' + str(result.stderr))
+            log.error(result.stderr)
             log.info('Command failed.')
 
     except Exception as e:
+        context.gear_dict['errors'].append(e)
         log.critical(e,)
         log.exception('Unable to execute command.')
-        os.sys.exit(1)
 
     finally:
 
         # possibly save ALL intermediate output
         if context.config['gear-save-all-output']:
-            results.zip_output(context)
+            zip_output(context)
 
-        try:
-            ret = result.returncode
-        except NameError:
+        ret = result.returncode
+
+        if len(context.gear_dict['errors']) > 0 :
+            msg = 'Previous errors:\n'
+            for err in context.gear_dict['errors']:
+                msg += '  ' + str(type(err)).split("'")[1] + ': ' + str(err) + '\n'
+            log.info(msg)
             ret = 1
 
         log.info('BIDS App Gear is done.')
         os.sys.exit(ret)
+ 
+
+if __name__ == '__main__':
+
+    context = flywheel.GearContext()
+
+    log = initialize(context)
+
+    create_command(context, log)
+
+    set_up_data(context, log)
+
+    execute(context, log)
 
 
 # vi:set autoindent ts=4 sw=4 expandtab : See Vim, :help 'modeline'
