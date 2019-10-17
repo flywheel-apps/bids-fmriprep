@@ -4,7 +4,6 @@ import subprocess as sp
 import os, os.path as op
 import logging
 import re
-import shutil
 import json
 
 from .licenses.freesurfer import find_freesurfer_license
@@ -19,6 +18,9 @@ def get_inputs_and_args(context):
     key:value command-line parameter names:values These will be
     validated and assembled into a command-line below.  
     """
+
+    log.debug('')
+
 
     # 1) Process Inputs
 
@@ -57,6 +59,9 @@ def validate(context):
     Gives warnings for possible settings that could result in bad results.
     Gives errors (and raises exceptions) for settings that are violations 
     """
+
+    log.debug('')
+
     param_list = context.gear_dict['param_list']
     # Test for input existence
     # if not op.exists(params['i']):
@@ -79,6 +84,8 @@ def build_command(context):
     param_list is a dictionary of key:value pairs to be put into the command list
     as such ("-k value" or "--key=value")
     """
+
+    log.debug('')
 
     command = context.gear_dict['command']
 

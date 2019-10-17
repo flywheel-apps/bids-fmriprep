@@ -21,6 +21,9 @@ def validate_bids(context):
             gear-run-bids-validation
             gear-abort-on-bids-error
     """
+
+    log.debug('')
+
     config = context.config
     bids_path = context.gear_dict['bids_path']
     environ = context.gear_dict['environ']

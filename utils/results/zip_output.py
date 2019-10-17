@@ -16,6 +16,8 @@ def zip_output(context):
     # If the output/result.anat path exists, zip regardless of exit status
     # Clean input_file_basename to lack esc chars and extension info
 
+    log.debug('')
+
     # Grab Session label
     session_label = context.gear_dict['session_label']
     dest_zip = os.path.join(context.output_dir,session_label + '.zip')

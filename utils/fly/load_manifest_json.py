@@ -16,6 +16,9 @@ def load_manifest_json():
     :return: manifest_json
     :rtype: dict
     """
+
+    log.debug('')
+
     config_file_path = '/flywheel/v0/manifest.json'
     with open(config_file_path) as manifest_data:
         manifest_json = json.load(manifest_data)

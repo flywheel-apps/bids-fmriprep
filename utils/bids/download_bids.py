@@ -17,6 +17,8 @@ def download_bids(context):
         one did not get downloaded.
     """
 
+    log.debug('')
+
     bids_path = context.gear_dict['bids_path'] 
 
     # If BIDS was already downloaded, don't do it again

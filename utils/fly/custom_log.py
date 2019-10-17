@@ -30,7 +30,7 @@ def custom_log(gear_context):
     log_name = '/'.join([suite, gear_name])
 
     # Tweak the formatting
-    fmt = '%(asctime)s.%(msecs)03d %(levelname)-8s [%(name)s]: %(message)s'
+    fmt = '%(asctime)s.%(msecs)03d %(levelname)-8s [%(name)s %(funcName)s()]: %(message)s'
     logging.basicConfig(level=log_level, format=fmt, datefmt='%H:%M:%S')
     log = logging.getLogger(log_name)
     log.critical('{} log level is {}'.format(log_name, log_level))

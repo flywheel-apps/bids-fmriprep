@@ -2,6 +2,7 @@
 
 import logging
 import os
+import shutil
 
 
 log = logging.getLogger(__name__)
@@ -9,6 +10,9 @@ log = logging.getLogger(__name__)
 
 def find_freesurfer_license(context, fs_license_path):
     """ creates the Freesurfer license file at the given place in one of 3 ways """
+
+    log.debug('')
+
 
     context.gear_dict['fs_license_found'] = False
     license_info = ''
