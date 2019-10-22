@@ -125,8 +125,7 @@ def execute(context, log):
         if ok_to_run:
             # Run the actual command this gear was created for
             result = sp.run(context.gear_dict['command'], 
-                        env = context.gear_dict['environ'],
-                        stderr = sp.PIPE)
+                        env = context.gear_dict['environ'])
 
         log.info('Return code: ' + str(result.returncode))
 
