@@ -23,6 +23,7 @@ RUN pip install flywheel-sdk==10.0.2 \
 # The last line above is to help keep the docker image smaller
 
 # Save docker environ
+ENV PYTHONUNBUFFERED 1
 RUN python -c 'import os, json; f = open("/tmp/gear_environ.json", "w"); json.dump(dict(os.environ), f)' 
 
 # Make directory for flywheel spec (v0)
