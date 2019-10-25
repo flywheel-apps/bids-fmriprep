@@ -79,7 +79,7 @@ def create_command(context, log):
 
     except Exception as e:
         context.gear_dict['errors'].append(e)
-        log.critical(e,)
+        log.critical(e)
         log.exception('Error in creating and validating command.',)
 
 
@@ -96,7 +96,7 @@ def set_up_data(context, log):
 
     except Exception as e:
         context.gear_dict['errors'].append(e)
-        log.critical(e,)
+        log.critical(e)
         log.exception('Error in BIDS download and validation.',)
 
 
@@ -137,7 +137,7 @@ def execute(context, log):
 
     except Exception as e:
         context.gear_dict['errors'].append(e)
-        log.critical(e,)
+        log.critical(e)
         log.exception('Unable to execute command.')
 
     finally:
