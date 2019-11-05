@@ -87,8 +87,21 @@ def set_up_data(context, log):
     # Set up and validate data to be used by command
     try:
 
-        # Download bids for the current session
-        download_bids(context)
+        # TODO
+        # Get subject code from destination
+        fw = context.client
+        dest_container = fw.get(context.destination['id'])
+        subject_id = dest_container.parents.subject
+        subject = fw.get(subject_id)
+
+        # Download bids for the current session 
+        # editme: add kwargs to limit what is downloaded
+        # bool src_data: Whether or not to include src data (e.g. dicoms) default: False
+        # list subjects: The list of subjects to include (via subject code) otherwise all subjects
+        # list sessions: The list of sessions to include (via session label) otherwise all sessions
+        # list folders: The list of folders to include (otherwise all folders) e.g. ['anat', 'func']
+        # **kwargs: Additional arguments to pass to download_bids_dir
+        download_bids(context, subjects=[subject.code],folders=['anat', 'func', 'fmap'])
 
         # Validate Bids file heirarchy
         # Bids validation on a phantom tree may be occuring soon
