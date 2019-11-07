@@ -5,6 +5,7 @@ import json
 import os
 import subprocess as sp
 import sys
+import shutil
 
 import flywheel
 from utils import args
@@ -13,6 +14,10 @@ from utils.bids.validate_bids import *
 from utils.fly.custom_log import *
 from utils.fly.load_manifest_json import *
 from utils.results.zip_output import *
+from utils.results.zip_htmls import *
+from utils.results.zip_intermediate import zip_all_intermediate_output
+from utils.results.zip_intermediate import zip_intermediate_selected
+import utils.dry_run
 
 
 def initialize(context):
@@ -27,9 +32,21 @@ def initialize(context):
     # Instantiate custom gear dictionary to hold "gear global" info
     context.gear_dict = {}
 
+    # Get subject code from destination
+    fw = context.client
+    dest_container = fw.get(context.destination['id'])
+    subject_id = dest_container.parents.subject
+    subject = fw.get(subject_id)
+    context.gear_dict['subject'] = subject.code
+
     # the usual BIDS path:
     bids_path = os.path.join(context.work_dir, 'bids')
     context.gear_dict['bids_path'] = bids_path
+
+    # in the output/ directory, add extra analysis_id directory name for easy
+    #  zipping of final outputs to return.
+    context.gear_dict['output_analysisid_dir'] = \
+        context.output_dir + '/' + context.destination['id']
 
     # Keep a list of errors to print all in one place at end
     context.gear_dict['errors'] = []
@@ -53,13 +70,14 @@ def create_command(context, log):
     # Create the command and validate the given arguments
     try:
 
-        # editme: Set the actual gear command:
+        # Set the actual gear command:
         command = ['fmriprep']
 
+        # 3 positional args: bids path, output dir, 'participant'
         # This should be done here in case there are nargs='*' arguments
         # These follow the BIDS Apps definition (https://github.com/BIDS-Apps)
         command.append(context.gear_dict['bids_path'])
-        command.append(context.output_dir)
+        command.append(context.gear_dict['output_analysisid_dir'])
         command.append('participant')
 
         # Put command into gear_dict so arguments can be added in args.
@@ -87,12 +105,6 @@ def set_up_data(context, log):
     # Set up and validate data to be used by command
     try:
 
-        # TODO
-        # Get subject code from destination
-        fw = context.client
-        dest_container = fw.get(context.destination['id'])
-        subject_id = dest_container.parents.subject
-        subject = fw.get(subject_id)
 
         # Download bids for the current session 
         # editme: add kwargs to limit what is downloaded
@@ -101,7 +113,7 @@ def set_up_data(context, log):
         # list sessions: The list of sessions to include (via session label) otherwise all sessions
         # list folders: The list of folders to include (otherwise all folders) e.g. ['anat', 'func']
         # **kwargs: Additional arguments to pass to download_bids_dir
-        download_bids(context, subjects=[subject.code],folders=['anat', 'func', 'fmap'])
+        download_bids(context, subjects=[context.gear_dict['subject']],folders=['anat', 'func', 'fmap'])
 
         # Validate Bids file heirarchy
         # Bids validation on a phantom tree may be occuring soon
@@ -134,6 +146,7 @@ def execute(context, log):
             e = 'gear-dry-run is set: Command was NOT run.'
             log.info(e)
             context.gear_dict['errors'].append(e)
+            utils.dry_run.pretend_it_ran(context)
 
         if ok_to_run:
             # Run the actual command this gear was created for
@@ -155,16 +168,30 @@ def execute(context, log):
 
     finally:
 
+        # Make archives for result *.html files for easy display on platform
+        zip_htmls(context)
+
+        zip_output(context)
+
         # possibly save ALL intermediate output
-        if context.config['gear-save-all-output']:
-            zip_output(context)
+        if context.config['gear-save-intermediate-output']:
+            zip_all_intermediate_output(context)
+
+        # possibly save intermediate files and folders
+        zip_intermediate_selected(context)
+
+        # clean up: removed output that was zipped
+        shutil.rmtree(context.gear_dict['output_analysisid_dir'])
 
         ret = result.returncode
 
         if len(context.gear_dict['errors']) > 0 :
             msg = 'Previous errors:\n'
             for err in context.gear_dict['errors']:
-                msg += '  ' + str(type(err)).split("'")[1] + ': ' + str(err) + '\n'
+                if str(type(err)).split("'")[1] == 'str':
+                    msg += '  Error msg: ' + str(err) + '\n'
+                else:
+                    msg += '  ' + str(type(err)).split("'")[1] + ': ' + str(err) + '\n'
             log.info(msg)
             ret = 1
 

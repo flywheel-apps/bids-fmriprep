@@ -9,39 +9,26 @@ log = logging.getLogger(__name__)
 
 
 def zip_output(context):
-    # Cleanup, create manifest, create zipped results,
-    # move all results to the output directory
+    """Create zipped results"""
+
+
     # This executes regardless of errors or exit status,
-    os.chdir(context.work_dir)
-    # If the output/result.anat path exists, zip regardless of exit status
-    # Clean input_file_basename to lack esc chars and extension info
 
-    log.debug('')
+    # Zip file name has <subject> and <analysis>
+    subject = context.gear_dict['subject']
+    analysis_id = context.destination['id']
+    file_name = 'fmriprep_' + subject + '_' + analysis_id + '.zip'
+    dest_zip = os.path.join(context.output_dir,file_name)
 
-    # Grab Session label
-    session_label = context.gear_dict['session_label']
-    dest_zip = os.path.join(context.output_dir,session_label + '.zip')
+    # fmriprep output went into output/analysis_id/...
+    os.chdir(context.output_dir)
+    actual_dir = context.destination['id']
 
-    if os.path.exists(os.path.join(context.work_dir,session_label)):
-        log.info(
-            'Zipping ' + session_label + ' directory to ' + dest_zip + '.'
-        )
-        # For results with a large number of files, provide a manifest.
-        # Capture the stdout/stderr in a file handle or for logging.
-        manifest = os.path.join(
-            context.output_dir, session_label + '_output_manifest.txt'
-        )
-        command0 = ['tree', '-shD', '-D', session_label]
-        with open(manifest, 'w') as f:
-            result0 = sp.run(command0, stdout = f)
-        command1 = ['zip', '-r', dest_zip, session_label]
-        result1 = sp.run(command1, stdout=sp.PIPE, stderr=sp.PIPE)
-    else:
-        log.info(
-            'No results directory, ' + \
-            os.path.join(context.work_dir,session_label) + \
-            ', to zip.'
-        )
+    log.info(
+        'Zipping ' + actual_dir + ' directory to ' + dest_zip + '.'
+    )
+    command = ['zip', '-q', '-r', dest_zip, actual_dir]
+    result = sp.run(command, check=True)
 
 
 # vi:set autoindent ts=4 sw=4 expandtab : See Vim, :help 'modeline'

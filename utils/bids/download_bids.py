@@ -17,9 +17,9 @@ def download_bids(context, src_data=False, subjects=None, sessions=None, folders
         one did not get downloaded.
     """
 
-    log.debug('')
-
     bids_path = context.gear_dict['bids_path'] 
+
+    log.info('Downloading into: ' + bids_path)
 
     # If BIDS was already downloaded, don't do it again
     # (this saves time when developing locally)
