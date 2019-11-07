@@ -46,33 +46,46 @@ def validate_bids(context):
         with open(out_path) as jfp:
             bids_output = json.load(jfp)
 
-        # show summary of valid BIDS stuff
-        log.info('bids-validator results:\n\nValid BIDS files summary:\n' +
-                 pprint.pformat(bids_output['summary'], indent=8) + '\n')
+        try:
+            # show summary of valid BIDS stuff
+            log.info('bids-validator results:\n\nValid BIDS files summary:\n' +
+                     pprint.pformat(bids_output['summary'], indent=8) + '\n')
 
-        num_bids_errors = len(bids_output['issues']['errors'])
+            num_bids_errors = len(bids_output['issues']['errors'])
 
-        # show all errors
-        for err in bids_output['issues']['errors']:
-            err_msg = err['reason'] + '\n'
-            for ff in err['files']:
-                if ff["file"]:
-                    err_msg += '       ' + ff["file"]["relativePath"] + '\n'
-            log.error(err_msg)
+            # show all errors
+            for err in bids_output['issues']['errors']:
+                err_msg = err['reason'] + '\n'
+                for ff in err['files']:
+                    if ff["file"]:
+                        err_msg += '       ' + ff["file"]["relativePath"] + '\n'
+                log.error(err_msg)
 
-        # show all warnings
-        for warn in bids_output['issues']['warnings']:
-            warn_msg = warn['reason'] + '\n'
-            for ff in warn['files']:
-                if ff["file"]:
-                    warn_msg += '       ' + ff["file"]["relativePath"] + '\n'
-            log.warning(warn_msg)
+            # show all warnings
+            for warn in bids_output['issues']['warnings']:
+                warn_msg = warn['reason'] + '\n'
+                for ff in warn['files']:
+                    if ff["file"]:
+                        warn_msg += '       ' + ff["file"]["relativePath"] + '\n'
+                log.warning(warn_msg)
 
-        if config['gear-abort-on-bids-error'] and num_bids_errors > 0:
-            raise Exception(' ' + str(num_bids_errors) + ' BIDS validation errors ' +
-                         'were detected: NOT running.')
-            # raising Exception instead of exiting.... exterior "try"-block 
-            # catches these
+        except KeyError as e:
+            num_bids_errors = 1
+            msg = 'KeyError: bids-validator result missing ' + str(repr(e))
+            log.critical(msg)
+            context.gear_dict['errors'].append(msg)
+
+        if num_bids_errors > 0:
+
+            msg = 'bids-validator detected errors'
+            log.error(msg)
+            context.gear_dict['errors'].append(msg)
+
+            if config['gear-abort-on-bids-error']:
+                raise Exception(' ' + str(num_bids_errors) + ' BIDS validation errors ' +
+                             'were detected: NOT running.')
+                # raising Exception instead of exiting.... exterior "try"-block 
+                # catches these
 
 
 # vi:set autoindent ts=4 sw=4 expandtab : See Vim, :help 'modeline'
