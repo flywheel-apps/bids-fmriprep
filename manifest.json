@@ -47,26 +47,6 @@
       "base": "api-key",
       "read-only": true
     },
-    "t1w_anatomy": {
-      "description": "T1 weighted anatomical NIfTI file. When provided this file will be used in place of any T1w images found in the current session.",
-      "base": "file",
-      "optional": true,
-      "type": {
-        "enum": [
-          "nifti"
-        ]
-      }
-    },
-    "t2w_anatomy": {
-      "description": "T2 weighted anatomical NIfTI file. When provided this file will be used in place of any T2w images found in the current session.",
-      "base": "file",
-      "optional": true,
-      "type": {
-        "enum": [
-          "nifti"
-        ]
-      }
-    },
     "freesurfer_license": {
       "description": "FreeSurfer license file, provided during registration with FreeSurfer. This file will by copied to the $FSHOME directory and used during execution of the Gear.",
       "base": "file",
@@ -103,6 +83,11 @@
       "description": "upper bound memory limit for FMRIPREP processes",
       "optional": true,
       "type": "number"
+    },
+    "anat-only": {
+      "description": "run anatomical workflows only",
+      "optional": true,
+      "type": "boolean"
     },
     "boilerplate": {
       "description": "generate boilerplate only",
@@ -189,6 +174,11 @@
       "description": "Number of non steady state volumes.",
       "optional": true,
       "type": "integer"
+    },
+    "use-aroma": {
+      "description": "add ICA_AROMA to your preprocessing stream [ default = false ]",
+      "type": "boolean",
+      "default": false
     },
     "aroma-melodic-dimensionality": {
       "description": "Exact or maximum number of MELODIC components to estimate (positive = exact, negative = maximum",
