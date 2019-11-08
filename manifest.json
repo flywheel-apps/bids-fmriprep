@@ -235,11 +235,6 @@
       "optional": true,
       "type": "boolean"
     },
-    "fs-license-file": {
-      "description": "Path to FreeSurfer license key file. Get it (for free) by registering at https://surfer.nmr.mgh.harvard.edu/registration.html",
-      "optional": true,
-      "type": "string"
-    },
     "no-submm-recon": {
       "description": "disable sub-millimeter (hires) reconstruction",
       "optional": true,
