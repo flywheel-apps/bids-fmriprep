@@ -48,8 +48,11 @@ def zip_intermediate_selected(context):
                     result = sp.run(command, check=True)
             for ff in walk_dirs:
                 if ff in folders:
-                    log.info('Zipping folder: ' + subdir)
-                    command = ['zip', '-q', '-r', dest_zip, subdir]
+                    print('subdir = ' + subdir)
+                    print('ff     = ' + ff)
+                    path = os.path.join(subdir, ff)
+                    log.info('Zipping folder: ' + path)
+                    command = ['zip', '-q', '-r', dest_zip, path]
                     result = sp.run(command, check=True)
 
 

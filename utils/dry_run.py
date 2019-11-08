@@ -21,7 +21,7 @@ def pretend_it_ran(context):
     log.info('Creating fake output in ' + path)
 
     files = [path + 'fmriprep_wf/d3.js',
-             path + 'reportlets/fmriprep/sub-TOME3024/anat' + \
+             path + 'reportlets/fmriprep/sub-TOME3024/anat/' + \
              'sub-TOME3024_desc-about_T1w.html']
 
     for ff in files:
