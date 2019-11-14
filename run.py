@@ -48,8 +48,9 @@ def initialize(context):
     context.gear_dict['output_analysisid_dir'] = \
         context.output_dir + '/' + context.destination['id']
 
-    # Keep a list of errors to print all in one place at end
-    context.gear_dict['errors'] = []
+    # Keep a list of errors and warning to print all in one place at end
+    context.gear_dict['errors'] = []  # any errors will cause exit(1)
+    context.gear_dict['warnings'] = []
 
     # grab environment for gear
     with open('/tmp/gear_environ.json', 'r') as f:
@@ -144,8 +145,8 @@ def execute(context, log):
             result = sp.CompletedProcess
             result.returncode = 0
             e = 'gear-dry-run is set: Command was NOT run.'
-            log.critical(e)
-            context.gear_dict['errors'].append(e)
+            log.warning(e)
+            context.gear_dict['warnings'].append(e)
             utils.dry_run.pretend_it_ran(context)
 
         if ok_to_run:
@@ -185,12 +186,23 @@ def execute(context, log):
 
         ret = result.returncode
 
+        if len(context.gear_dict['warnings']) > 0 :
+            msg = 'Previous warnings:\n'
+            for err in context.gear_dict['warnings']:
+                if str(type(err)).split("'")[1] == 'str':
+                    # show string
+                    msg += '  Warning: ' + str(err) + '\n'
+                else:  # show type (of warning) and warning message
+                    msg += '  ' + str(type(err)).split("'")[1] + ': ' + str(err) + '\n'
+            log.info(msg)
+
         if len(context.gear_dict['errors']) > 0 :
             msg = 'Previous errors:\n'
             for err in context.gear_dict['errors']:
                 if str(type(err)).split("'")[1] == 'str':
+                    # show string
                     msg += '  Error msg: ' + str(err) + '\n'
-                else:
+                else:  # show type (of error) and error message
                     msg += '  ' + str(type(err)).split("'")[1] + ': ' + str(err) + '\n'
             log.info(msg)
             ret = 1
