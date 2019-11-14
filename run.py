@@ -142,9 +142,9 @@ def execute(context, log):
         if context.config['gear-dry-run']:
             ok_to_run = False
             result = sp.CompletedProcess
-            result.returncode = 1
+            result.returncode = 0
             e = 'gear-dry-run is set: Command was NOT run.'
-            log.info(e)
+            log.critical(e)
             context.gear_dict['errors'].append(e)
             utils.dry_run.pretend_it_ran(context)
 
