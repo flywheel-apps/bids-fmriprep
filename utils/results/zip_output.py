@@ -15,7 +15,7 @@ def zip_output(context):
     # This executes regardless of errors or exit status,
 
     # Zip file name has <subject> and <analysis>
-    subject = context.gear_dict['subject']
+    subject = context.gear_dict['subject_code']
     analysis_id = context.destination['id']
     file_name = 'fmriprep_' + subject + '_' + analysis_id + '.zip'
     dest_zip = os.path.join(context.output_dir,file_name)

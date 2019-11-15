@@ -17,7 +17,7 @@ def zip_intermediate_selected(context):
     log.debug('')
 
     # Name of zip file has <subject> and <analysis>
-    subject = context.gear_dict['subject']
+    subject = context.gear_dict['subject_code']
     analysis_id = context.destination['id']
     file_name = 'fmriprep_work_selected_' + subject + '_' + analysis_id + '.zip'
     dest_zip = os.path.join(context.output_dir,file_name)
@@ -64,7 +64,7 @@ def zip_all_intermediate_output(context):
     log.debug('')
 
     # Name of zip file has <subject> and <analysis>
-    subject = context.gear_dict['subject']
+    subject = context.gear_dict['subject_code']
     analysis_id = context.destination['id']
     file_name = 'fmriprep_work_' + subject + '_' + analysis_id + '.zip'
     dest_zip = os.path.join(context.output_dir,file_name)

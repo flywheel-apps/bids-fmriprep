@@ -32,12 +32,26 @@ def initialize(context):
     # Instantiate custom gear dictionary to hold "gear global" info
     context.gear_dict = {}
 
-    # Get subject code from destination
+    # Keep a list of errors and warning to print all in one place at end of log
+    # Any errors will prevent the command from running and will cause exit(1)
+    context.gear_dict['errors'] = []  
+    context.gear_dict['warnings'] = []
+
+    # Get level of run from destination's parent: subject or session
     fw = context.client
     dest_container = fw.get(context.destination['id'])
+    context.gear_dict['run_level'] = dest_container.parent.type
+
     subject_id = dest_container.parents.subject
+    context.gear_dict['subject_id'] = subject_id
     subject = fw.get(subject_id)
-    context.gear_dict['subject'] = subject.code
+    context.gear_dict['subject_code'] = subject.code
+
+    session_id = dest_container.parents.session
+    context.gear_dict['session_id'] = session_id
+    if session_id:
+        session = fw.get(session_id)
+        context.gear_dict['session_label'] = session.label
 
     # the usual BIDS path:
     bids_path = os.path.join(context.work_dir, 'bids')
@@ -47,10 +61,6 @@ def initialize(context):
     #  zipping of final outputs to return.
     context.gear_dict['output_analysisid_dir'] = \
         context.output_dir + '/' + context.destination['id']
-
-    # Keep a list of errors and warning to print all in one place at end
-    context.gear_dict['errors'] = []  # any errors will cause exit(1)
-    context.gear_dict['warnings'] = []
 
     # grab environment for gear
     with open('/tmp/gear_environ.json', 'r') as f:
@@ -114,7 +124,28 @@ def set_up_data(context, log):
         # list sessions: The list of sessions to include (via session label) otherwise all sessions
         # list folders: The list of folders to include (otherwise all folders) e.g. ['anat', 'func']
         # **kwargs: Additional arguments to pass to download_bids_dir
-        download_bids(context, subjects=[context.gear_dict['subject']],folders=['anat', 'func', 'fmap'])
+
+        if context.gear_dict['run_level'] == 'subject':
+
+            log.info('Downloading BIDS for subject "' + 
+                     context.gear_dict['subject_code'] + '"')
+
+            download_bids(context, 
+                      subjects = [context.gear_dict['subject_code']],
+                      folders=['anat', 'func', 'fmap'])
+
+        elif context.gear_dict['run_level'] == 'session':
+
+            log.info('Downloading BIDS for session "' + 
+                     context.gear_dict['session_label'] + '"')
+
+            download_bids(context, 
+                      sessions = [context.gear_dict['session_label']],
+                      folders=['anat', 'func', 'fmap'])
+
+        else:
+            msg = 'This job is not being run at the subject or session level'
+            raise TypeError(msg)
 
         # Validate Bids file heirarchy
         # Bids validation on a phantom tree may be occuring soon
