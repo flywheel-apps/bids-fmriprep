@@ -15,20 +15,20 @@ RUN apt-get update && \
 
 RUN npm install -g bids-validator@1.3.0
 
-RUN pip install flywheel-sdk==10.0.2 \
-        flywheel-bids==0.8.0 && \
+RUN pip install flywheel-sdk==10.3.0 \
+        flywheel-bids==0.8.2 \
         psutil==5.6.3 && \
     rm -rf /root/.cache/pip
 
 # The last line above is to help keep the docker image smaller
 
-# Save docker environ
-ENV PYTHONUNBUFFERED 1
-RUN python -c 'import os, json; f = open("/tmp/gear_environ.json", "w"); json.dump(dict(os.environ), f)' 
-
 # Make directory for flywheel spec (v0)
 ENV FLYWHEEL /flywheel/v0
 WORKDIR ${FLYWHEEL}
+
+# Save docker environ
+ENV PYTHONUNBUFFERED 1
+RUN python -c 'import os, json; f = open("/tmp/gear_environ.json", "w"); json.dump(dict(os.environ), f)' 
 
 # Copy executable/manifest to Gear
 COPY run.py ${FLYWHEEL}/run.py

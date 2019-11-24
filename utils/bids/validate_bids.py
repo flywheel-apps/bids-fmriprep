@@ -81,7 +81,7 @@ def validate_bids(context):
             log.error(msg)
             context.gear_dict['errors'].append(msg)
 
-            if config['gear-abort-on-bids-error']:
+            if config['gear-abort-on-bids-error'] and num_bids_errors > 0:
                 raise Exception(' ' + str(num_bids_errors) + ' BIDS validation errors ' +
                              'were detected: NOT running.')
                 # raising Exception instead of exiting.... exterior "try"-block 

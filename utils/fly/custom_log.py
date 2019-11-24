@@ -31,7 +31,8 @@ def custom_log(gear_context):
 
     # Tweak the formatting
     fmt = '%(asctime)s.%(msecs)03d %(levelname)-8s [%(name)s %(funcName)s()]: %(message)s'
-    logging.basicConfig(level=log_level, format=fmt, datefmt='%Y-%m-%d %H:%M:%S')
+    logging.basicConfig(level=log_level, format=fmt, 
+                        datefmt='%Y-%m-%d %H:%M:%S')
     log = logging.getLogger(log_name)
     log.critical('{} log level is {}'.format(log_name, log_level))
     return log

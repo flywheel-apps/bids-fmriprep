@@ -6,22 +6,32 @@ import os
 import logging
 import subprocess as sp
 
-from .zip_it_zip_it_good import *
 
 log = logging.getLogger(__name__)
 
 
-def zip_htmls(context):
-    """ Since zip_all_html() doesn't work, each html file must be
-        converted into an archive individually.
-        For each html file, rename it to be "index.html", then create a zip
-        archive from it.
+def zip_it_zip_it_good(context, name):
+    """ Compress html file into an appropriately named archive file *.html.zip 
+    files are automatically shown in another tab in the browser. These are
+    saved at the top level of the output folder."""
+
+    dest_zip = os.path.join(context.output_dir,name + '.zip')
+
+    log.info('Creating viewable archive "' + dest_zip + '"')
+
+    command = ['zip', '-q', dest_zip, 'index.html']
+    result = sp.run(command, check=True)
+
+
+def zip_htmls(context, path):
+    """ Zip all .html files at the given path so they can be displayed
+        on the Flywheel platform.
+        Each html file must be converted into an archive individually:
+          rename each to be "index.html", then create a zip archive from it.  
     """
 
 
     log.info('Creating viewable archives for all html files')
-
-    path = context.gear_dict['output_analysisid_dir'] + '/fmriprep'
 
     if os.path.exists(path):
 
@@ -31,26 +41,34 @@ def zip_htmls(context):
 
         html_files = glob.glob('*.html')
 
-        # if there is an index.html, do it first and re-name it for safe keeping
-        save_name = ''
-        if os.path.exists('index.html'):
-            log.info('Found index.html')
-            zip_it_zip_it_good(context,'index.html')
+        if len(html_files) > 0:
 
-            now = datetime.datetime.now()
-            save_name = now.strftime("%Y-%m-%d_%H-%M-%S") + '_index.html'
-            os.rename('index.html', save_name)
+            # if there is an index.html, do it first and re-name it for safe 
+            # keeping
+            save_name = ''
+            save_path = context.output_dir + '/' + context.destination['id'] + '_'
 
-            html_files.remove('index.html')  # don't do this one later
+            if os.path.exists('index.html'):
+                log.info('Found index.html')
+                zip_it_zip_it_good(context,save_path = 'index.html')
 
-        for h_file in html_files:
-            os.rename(h_file, 'index.html')
-            zip_it_zip_it_good(context,context.output_dir + '/' + h_file)
-            os.rename('index.html', h_file)
+                now = datetime.datetime.now()
+                save_name = now.strftime("%Y-%m-%d_%H-%M-%S") + '_index.html'
+                os.rename('index.html', save_name)
 
-        # reestore if necessary
-        if save_name != '':
-            os.rename(save_name, 'index.html')
+                html_files.remove('index.html')  # don't do this one later
+
+            for h_file in html_files:
+                os.rename(h_file, 'index.html')
+                zip_it_zip_it_good(context,save_path + h_file)
+                os.rename('index.html', h_file)
+
+            # reestore if necessary
+            if save_name != '':
+                os.rename(save_name, 'index.html')
+
+        else:
+            log.warning('No *.html files at ' + path)
 
     else:
 

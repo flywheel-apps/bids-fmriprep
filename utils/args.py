@@ -21,10 +21,9 @@ def get_inputs_and_args(context):
 
     log.debug('')
 
-
     # 1) Process Inputs
 
-    # editme: optional.  Keep this if the gear runs Freesurfer.  This is here
+    # The gear runs Freesurfer.  This is here
     # because one way to pass the license is by an input
     find_freesurfer_license(context, '/opt/freesurfer/license.txt')
 

@@ -23,6 +23,8 @@ def find_freesurfer_license(context, fs_license_path):
     if fs_license_file:
         # TODO make sure this works, it has not been tested
         # just copy the file to the right place
+        if not os.path.exists(fs_license_path):
+            os.makedirs(fs_license_path)
         shutil.copy(fs_license_file, fs_license_path)
         context.gear_dict['fs_license_found'] = True
         log.info('Using FreeSurfer license in input file.')

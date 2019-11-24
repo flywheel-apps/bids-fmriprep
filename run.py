@@ -13,9 +13,12 @@ from utils.bids.download_bids import *
 from utils.bids.validate_bids import *
 from utils.fly.custom_log import *
 from utils.fly.load_manifest_json import *
-from utils.results.zip_output import *
-from utils.results.zip_htmls import *
+from utils.fly.make_file_name_safe import *
+from utils.results.set_zip_name import set_zip_head
+from utils.results.zip_htmls import zip_htmls
+from utils.results.zip_output import zip_output
 from utils.results.zip_intermediate import zip_all_intermediate_output
+from utils.results.zip_intermediate import zip_intermediate_selected
 from utils.results.zip_intermediate import zip_intermediate_selected
 import utils.dry_run
 
@@ -32,6 +35,9 @@ def initialize(context):
     # Instantiate custom gear dictionary to hold "gear global" info
     context.gear_dict = {}
 
+    # The main command line command to be run:
+    context.gear_dict['COMMAND'] = 'fmriprep'
+
     # Keep a list of errors and warning to print all in one place at end of log
     # Any errors will prevent the command from running and will cause exit(1)
     context.gear_dict['errors'] = []  
@@ -42,16 +48,44 @@ def initialize(context):
     dest_container = fw.get(context.destination['id'])
     context.gear_dict['run_level'] = dest_container.parent.type
 
+    project_id = dest_container.parents.project
+    context.gear_dict['project_id'] = project_id
+    if project_id:
+        project = fw.get(project_id)
+        context.gear_dict['project_label'] = project.label
+        context.gear_dict['project_label_safe'] = \
+            make_file_name_safe(project.label, '_')
+    else:
+        context.gear_dict['project_label'] = 'unknown_project'
+        context.gear_dict['project_label_safe'] = 'unknown_project'
+        log.warning('Project label is ' + context.gear_dict['project_label'])
+
     subject_id = dest_container.parents.subject
     context.gear_dict['subject_id'] = subject_id
-    subject = fw.get(subject_id)
-    context.gear_dict['subject_code'] = subject.code
+    if subject_id:
+        subject = fw.get(subject_id)
+        context.gear_dict['subject_code'] = subject.code
+        context.gear_dict['subject_code_safe'] = \
+            make_file_name_safe(subject.code, '_')
+    else:
+        context.gear_dict['subject_code'] = 'unknown_subject'
+        context.gear_dict['subject_code_safe'] = 'unknown_subject'
+        log.warning('Subject code is ' + context.gear_dict['subject_code'])
 
     session_id = dest_container.parents.session
     context.gear_dict['session_id'] = session_id
     if session_id:
         session = fw.get(session_id)
         context.gear_dict['session_label'] = session.label
+        context.gear_dict['session_label_safe'] = \
+            make_file_name_safe(session.label, '_')
+    else:
+        context.gear_dict['session_label'] = 'unknown_session'
+        context.gear_dict['session_label_safe'] = 'unknown_session'
+        log.warning('Session label is ' + context.gear_dict['session_label'])
+
+    # Set first part of result zip file names based on the above file safe names
+    set_zip_head(context)
 
     # the usual BIDS path:
     bids_path = os.path.join(context.work_dir, 'bids')
@@ -82,7 +116,7 @@ def create_command(context, log):
     try:
 
         # Set the actual gear command:
-        command = ['fmriprep']
+        command = [context.gear_dict['COMMAND']]
 
         # 3 positional args: bids path, output dir, 'participant'
         # This should be done here in case there are nargs='*' arguments
@@ -116,7 +150,6 @@ def set_up_data(context, log):
     # Set up and validate data to be used by command
     try:
 
-
         # Download bids for the current session 
         # editme: add kwargs to limit what is downloaded
         # bool src_data: Whether or not to include src data (e.g. dicoms) default: False
@@ -125,26 +158,39 @@ def set_up_data(context, log):
         # list folders: The list of folders to include (otherwise all folders) e.g. ['anat', 'func']
         # **kwargs: Additional arguments to pass to download_bids_dir
 
-        if context.gear_dict['run_level'] == 'subject':
+        #folders_to_load = ['anat', 'func', 'fmap']
+        folders_to_load = []  # leave empty to download all folders
+
+        if context.gear_dict['run_level'] == 'project':
+
+            log.info('Downloading BIDS for project "' + 
+                     context.gear_dict['project_label'] + '"')
+
+            # don't filter by subject or session, grab all
+            download_bids(context, folders=folders_to_load)
+
+        elif context.gear_dict['run_level'] == 'subject':
 
             log.info('Downloading BIDS for subject "' + 
                      context.gear_dict['subject_code'] + '"')
 
+            # filter by subject
             download_bids(context, 
                       subjects = [context.gear_dict['subject_code']],
-                      folders=['anat', 'func', 'fmap'])
+                      folders=folders_to_load)
 
         elif context.gear_dict['run_level'] == 'session':
 
             log.info('Downloading BIDS for session "' + 
                      context.gear_dict['session_label'] + '"')
 
+            # filter by session
             download_bids(context, 
                       sessions = [context.gear_dict['session_label']],
-                      folders=['anat', 'func', 'fmap'])
+                      folders=folders_to_load)
 
         else:
-            msg = 'This job is not being run at the subject or session level'
+            msg = 'This job is not being run at the project subject or session level'
             raise TypeError(msg)
 
         # Validate Bids file heirarchy
@@ -184,6 +230,7 @@ def execute(context, log):
             # Run the actual command this gear was created for
             result = sp.run(context.gear_dict['command'], 
                         env = context.gear_dict['environ'])
+            log.debug(repr(result))
 
         log.info('Return code: ' + str(result.returncode))
 
@@ -201,7 +248,9 @@ def execute(context, log):
     finally:
 
         # Make archives for result *.html files for easy display on platform
-        zip_htmls(context)
+        path = context.gear_dict['output_analysisid_dir'] + \
+                                 '/' + context.gear_dict['COMMAND']
+        zip_htmls(context, path)
 
         zip_output(context)
 
@@ -212,8 +261,20 @@ def execute(context, log):
         # possibly save intermediate files and folders
         zip_intermediate_selected(context)
 
-        # clean up: removed output that was zipped
-        shutil.rmtree(context.gear_dict['output_analysisid_dir'])
+        # clean up: remove output that was zipped
+        if os.path.exists(context.gear_dict['output_analysisid_dir']):
+            if not context.config['gear-keep-output']:
+
+                shutil.rmtree(context.gear_dict['output_analysisid_dir'])
+                log.debug('removing output directory "' + 
+                          context.gear_dict['output_analysisid_dir'] + '"')
+
+            else:
+                log.info('NOT removing output directory "' + 
+                          context.gear_dict['output_analysisid_dir'] + '"')
+
+        else:
+            log.info('Output directory does not exist so it cannot be removed')
 
         ret = result.returncode
 

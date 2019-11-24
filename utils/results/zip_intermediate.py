@@ -16,44 +16,57 @@ def zip_intermediate_selected(context):
 
     log.debug('')
 
-    # Name of zip file has <subject> and <analysis>
-    subject = context.gear_dict['subject_code']
-    analysis_id = context.destination['id']
-    file_name = 'fmriprep_work_selected_' + subject + '_' + analysis_id + '.zip'
-    dest_zip = os.path.join(context.output_dir,file_name)
-
     do_find = False
     # get list of intermediate files (if any)
-    if isinstance(context.config['gear-intermediate-files'],str):
+    if context.config.get('gear-intermediate-files',None):
         if len(context.config['gear-intermediate-files']) > 0:
             files = context.config['gear-intermediate-files'].split()
             do_find = True
 
     # get list of intermediate folders (if any)
-    if isinstance(context.config['gear-intermediate-folders'],str):
+    if context.config.get('gear-intermediate-folders',None):
         if len(context.config['gear-intermediate-folders']) > 0:
             folders = context.config['gear-intermediate-folders'].split()
             do_find = True
 
-    os.chdir(context.work_dir)
-
     if do_find:
+
+        # Name of zip file has <subject> and <analysis>
+        subject = context.gear_dict['subject_code']
+        analysis_id = context.destination['id']
+        file_name = 'fmriprep_work_selected_' + subject + '_' + \
+                    analysis_id + '.zip'
+        dest_zip = os.path.join(context.output_dir,file_name)
+
+        os.chdir(context.work_dir)
+
         log.info('Files and folders will be zipped to "' + dest_zip + '"')
+
         for subdir, walk_dirs, walk_files in os.walk('.'):
+
             for ff in walk_files:
                 if ff in files:
                     path = os.path.join(subdir, ff)
-                    log.info('Zipping file:   ' + path)
-                    command = ['zip', '-q', dest_zip, path]
-                    result = sp.run(command, check=True)
+                    if os.path.exists(path):
+                        log.info('Zipping file:   ' + path)
+                        command = ['zip', '-q', dest_zip, path]
+                        result = sp.run(command, check=True)
+                    else:
+                        log.error('Missing file:   ' + path)
+
             for ff in walk_dirs:
                 if ff in folders:
                     print('subdir = ' + subdir)
                     print('ff     = ' + ff)
                     path = os.path.join(subdir, ff)
-                    log.info('Zipping folder: ' + path)
-                    command = ['zip', '-q', '-r', dest_zip, path]
-                    result = sp.run(command, check=True)
+                    if os.path.exists(path):
+                        log.info('Zipping folder: ' + path)
+                        command = ['zip', '-q', '-r', dest_zip, path]
+                        result = sp.run(command, check=True)
+                    else:
+                        log.error('Missing folder:   ' + path)
+    else:
+        log.debug('No files or folders specified in config to zip')
 
 
 def zip_all_intermediate_output(context):
