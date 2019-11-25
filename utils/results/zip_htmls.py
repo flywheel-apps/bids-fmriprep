@@ -15,7 +15,10 @@ def zip_it_zip_it_good(context, name):
     files are automatically shown in another tab in the browser. These are
     saved at the top level of the output folder."""
 
-    dest_zip = os.path.join(context.output_dir,name + '.zip')
+    name_no_html = name[:-5]  # remove ".html" from end
+
+    dest_zip = os.path.join(context.output_dir,
+        name_no_html +  '_' + context.destination['id'] + '.html.zip')
 
     log.info('Creating viewable archive "' + dest_zip + '"')
 
@@ -46,11 +49,9 @@ def zip_htmls(context, path):
             # if there is an index.html, do it first and re-name it for safe 
             # keeping
             save_name = ''
-            save_path = context.output_dir + '/' + context.destination['id'] + '_'
-
             if os.path.exists('index.html'):
                 log.info('Found index.html')
-                zip_it_zip_it_good(context,save_path = 'index.html')
+                zip_it_zip_it_good(context,'index.html')
 
                 now = datetime.datetime.now()
                 save_name = now.strftime("%Y-%m-%d_%H-%M-%S") + '_index.html'
@@ -60,7 +61,7 @@ def zip_htmls(context, path):
 
             for h_file in html_files:
                 os.rename(h_file, 'index.html')
-                zip_it_zip_it_good(context,save_path + h_file)
+                zip_it_zip_it_good(context,h_file)
                 os.rename('index.html', h_file)
 
             # reestore if necessary
