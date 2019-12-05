@@ -22,7 +22,12 @@ def zip_it_zip_it_good(context, name):
 
     log.info('Creating viewable archive "' + dest_zip + '"')
 
-    command = ['zip', '-q', dest_zip, 'index.html']
+    # The last part here is specific to fmriprep:
+    command = ['zip', '-q', '-r', dest_zip, 'index.html', 
+               name_no_html + '/figures']
+
+    log.info(' '.join(command))
+
     result = sp.run(command, check=True)
 
 
@@ -51,7 +56,7 @@ def zip_htmls(context, path):
             save_name = ''
             if os.path.exists('index.html'):
                 log.info('Found index.html')
-                zip_it_zip_it_good(context,'index.html')
+                zip_it_zip_it_good(context, 'index.html', '')
 
                 now = datetime.datetime.now()
                 save_name = now.strftime("%Y-%m-%d_%H-%M-%S") + '_index.html'
@@ -61,7 +66,7 @@ def zip_htmls(context, path):
 
             for h_file in html_files:
                 os.rename(h_file, 'index.html')
-                zip_it_zip_it_good(context,h_file)
+                zip_it_zip_it_good(context, h_file)
                 os.rename('index.html', h_file)
 
             # reestore if necessary

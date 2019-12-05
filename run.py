@@ -158,8 +158,7 @@ def set_up_data(context, log):
         # list folders: The list of folders to include (otherwise all folders) e.g. ['anat', 'func']
         # **kwargs: Additional arguments to pass to download_bids_dir
 
-        #folders_to_load = ['anat', 'func', 'fmap']
-        folders_to_load = []  # leave empty to download all folders
+        folders_to_load = ['anat', 'func', 'fmap']
 
         if context.gear_dict['run_level'] == 'project':
 
