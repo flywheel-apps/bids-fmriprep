@@ -22,10 +22,20 @@ def zip_it_zip_it_good(context, name):
 
     log.info('Creating viewable archive "' + dest_zip + '"')
 
-    # The last part here is specific to fmriprep:
-    command = ['zip', '-q', '-r', dest_zip, 'index.html', 
-               name_no_html + '/figures']
+    command = ['zip', '-q', '-r', dest_zip, 'index.html']
 
+    # find all directories called 'figures' and add them to the archive
+    top = context.gear_dict['output_analysisid_dir']
+    for root, dirs, files in os.walk(top):
+        #print('root = ' + root)
+        for name in dirs:
+            #print(name)
+            if name == 'figures':
+                path = '/'.join(os.path.join(root, name).split('/')[6:])
+                command.append(path)
+                log.info('including "' + path + '"')
+
+    # log command as a string separated by spaces
     log.info(' '.join(command))
 
     result = sp.run(command, check=True)
