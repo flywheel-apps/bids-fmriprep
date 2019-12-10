@@ -1,4 +1,3 @@
-# editme: change this file as needed
 # Use the latest Python 3 docker image
 FROM poldracklab/fmriprep:1.5.2
 
