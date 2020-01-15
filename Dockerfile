@@ -1,5 +1,4 @@
-# Use the latest Python 3 docker image
-FROM poldracklab/fmriprep:1.5.2
+FROM poldracklab/fmriprep:1.5.5
 
 MAINTAINER Flywheel <support@flywheel.io>
 
@@ -14,7 +13,7 @@ RUN apt-get update && \
 
 RUN npm install -g bids-validator@1.3.0
 
-RUN pip install flywheel-sdk==10.3.0 \
+RUN pip install flywheel-sdk==10.7.1 \
         flywheel-bids==0.8.2 \
         psutil==5.6.3 && \
     rm -rf /root/.cache/pip
