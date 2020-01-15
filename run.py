@@ -99,9 +99,9 @@ def initialize(context):
     context.gear_dict['output_analysisid_dir'] = \
         context.output_dir + '/' + context.destination['id']
 
-    # get # cpu's to set -openmp
-    cpu_count = str(os.cpu_count())
-    log.info('os.cpu_count() = ' + cpu_count)
+    # get # cpu's to set --n_cpus argument
+    cpu_count = os.cpu_count()
+    log.info('os.cpu_count() = ' + str(cpu_count))
     context.gear_dict['cpu_count'] = cpu_count
 
     log.info('psutil.virtual_memory().total= {:4.1f} GiB'.format(
