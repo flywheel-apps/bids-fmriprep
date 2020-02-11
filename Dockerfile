@@ -1,4 +1,4 @@
-FROM poldracklab/fmriprep:1.5.5
+FROM poldracklab/fmriprep:1.5.8
 
 MAINTAINER Flywheel <support@flywheel.io>
 
@@ -11,7 +11,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* 
 # The last line above is to help keep the docker image smaller
 
-RUN npm install -g bids-validator@1.3.0
+RUN npm install -g bids-validator@1.4.0
 
 RUN pip install flywheel-sdk==10.7.1 \
         flywheel-bids==0.8.2 \
