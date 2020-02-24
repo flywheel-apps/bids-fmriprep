@@ -23,7 +23,6 @@ def get_inputs_and_args(context):
 
     # 1) Process Inputs
 
-    # The gear runs Freesurfer.  This is here
     # because one way to pass the license is by an input
     find_freesurfer_license(context, '/opt/freesurfer/license.txt')
 
@@ -59,22 +58,22 @@ def validate(context):
     Gives errors (and raises exceptions) for settings that are violations 
     """
 
-    log.debug('')
-
     param_list = context.gear_dict['param_list']
-    # Test for input existence
-    # if not op.exists(params['i']):
-    #    raise Exception('Input File Not Found')
 
-    # Tests for specific problems/interactions that can raise exceptions or log warnings
-    # if ('betfparam' in params) and ('nononlinreg' in params):
-    #    if(params['betfparam']>0.0):
-    #        raise Exception('For betfparam values > zero, nonlinear registration is required.')
+    log.info('Checking param_list: ' + repr(param_list))
 
-    # if ('s' in params.keys()):
-    #    if params['s']==0:
-    #        log.warning(' The value of ' + str(params['s'] + \
-    #                    ' for -s may cause a singular matrix'))
+    if 'n_cpus' in param_list:
+
+        cpu_count = context.gear_dict['cpu_count']
+        str_cpu_count = str(cpu_count)
+
+        if param_list['n_cpus'] > cpu_count:
+            log.warning('n_cpus > number available, using ' + str_cpu_count)
+            param_list['n_cpus'] = cpu_count
+
+    else: #  Default is to use all cpus available
+        # zoom zomm
+        param_list['n_cpus'] = context.gear_dict['cpu_count']
 
 
 def build_command(context):

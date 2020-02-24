@@ -33,7 +33,7 @@ def validate_bids(context):
         command = ['bids-validator', '--verbose', '--json', bids_path]
         log.info('Command: ' + ' '.join(command))
 
-        out_path = "work/validator.output.txt"
+        out_path = "work/validator.output.json"
         with open(out_path, "w") as f:
             result = sp.run(command, stdout=f, stderr=sp.PIPE,
                             universal_newlines=True, env=environ)

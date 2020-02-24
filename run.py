@@ -6,6 +6,8 @@ import os
 import subprocess as sp
 import sys
 import shutil
+import psutil
+import glob
 
 import flywheel
 from utils import args
@@ -47,6 +49,7 @@ def initialize(context):
     fw = context.client
     dest_container = fw.get(context.destination['id'])
     context.gear_dict['run_level'] = dest_container.parent.type
+    log.info('Running at the ' + context.gear_dict['run_level'] + ' level.')
 
     project_id = dest_container.parents.project
     context.gear_dict['project_id'] = project_id
@@ -95,6 +98,16 @@ def initialize(context):
     #  zipping of final outputs to return.
     context.gear_dict['output_analysisid_dir'] = \
         context.output_dir + '/' + context.destination['id']
+
+    # get # cpu's to set --n_cpus argument
+    cpu_count = os.cpu_count()
+    log.info('os.cpu_count() = ' + str(cpu_count))
+    context.gear_dict['cpu_count'] = cpu_count
+
+    log.info('psutil.virtual_memory().total= {:4.1f} GiB'.format(
+                      psutil.virtual_memory().total / (1024 ** 3)))
+    log.info('psutil.virtual_memory().available= {:4.1f} GiB'.format(
+                      psutil.virtual_memory().available / (1024 ** 3)))
 
     # grab environment for gear
     with open('/tmp/gear_environ.json', 'r') as f:
@@ -151,7 +164,6 @@ def set_up_data(context, log):
     try:
 
         # Download bids for the current session 
-        # editme: add kwargs to limit what is downloaded
         # bool src_data: Whether or not to include src data (e.g. dicoms) default: False
         # list subjects: The list of subjects to include (via subject code) otherwise all subjects
         # list sessions: The list of sessions to include (via session label) otherwise all sessions
@@ -185,11 +197,13 @@ def set_up_data(context, log):
 
             # filter by session
             download_bids(context, 
+                      subjects = [context.gear_dict['subject_code']],
                       sessions = [context.gear_dict['session_label']],
                       folders=folders_to_load)
 
         else:
-            msg = 'This job is not being run at the project subject or session level'
+            msg = 'This job is not being run at the project subject or ' +\
+                  'session level'
             raise TypeError(msg)
 
         # Validate Bids file heirarchy
@@ -216,7 +230,7 @@ def execute(context, log):
             result.returncode = 1
             log.info('Command was NOT run because of previous errors.')
 
-        if context.config['gear-dry-run']:
+        elif context.config['gear-dry-run']:
             ok_to_run = False
             result = sp.CompletedProcess
             result.returncode = 0
@@ -251,6 +265,19 @@ def execute(context, log):
                                  '/' + context.gear_dict['COMMAND']
         zip_htmls(context, path)
 
+        # Remove all fsaverage* directories
+        if not context.config['gear-keep-fsaverage']:
+            path = context.gear_dict['output_analysisid_dir'] + \
+                                     '/freesurfer/fsaverage*'
+            fsavg_dirs = glob.glob(path)
+            for fsavg in fsavg_dirs:
+                log.info('deleting ' + fsavg)
+                shutil.rmtree(fsavg)
+        else:
+            log.info('Keeping fsaverage directories')
+
+        # save everything in context.gear_dict['output_analysisid_dir']
+        # as the main result
         zip_output(context)
 
         # possibly save ALL intermediate output
