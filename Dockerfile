@@ -1,4 +1,4 @@
-FROM poldracklab/fmriprep:1.5.8
+FROM poldracklab/fmriprep:1.5.9
 
 MAINTAINER Flywheel <support@flywheel.io>
 
@@ -13,7 +13,7 @@ RUN apt-get update && \
 
 RUN npm install -g bids-validator@1.4.0
 
-RUN pip install flywheel-sdk==10.7.1 \
+RUN pip install flywheel-sdk==11.2.3 \
         flywheel-bids==0.8.2 \
         psutil==5.6.3 && \
     rm -rf /root/.cache/pip
