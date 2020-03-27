@@ -1,10 +1,6 @@
-# If you edit this file, please consider updating bids-app-template
+"""Handle arguments"""
 
-import subprocess as sp
-import os, os.path as op
 import logging
-import re
-import json
 
 from .licenses.freesurfer import find_freesurfer_license
 
@@ -35,20 +31,13 @@ def get_inputs_and_args(context):
     for key in config.keys():
         if key[:5] == 'gear-':  # Skip any gear- parameters
             continue
-        # Use only those boolean values that are True
-        if type(config[key]) == bool:
-            if config[key]:
-                params[key] = True
-            # else ignore (could this cause a problem?)
-        else:
-            if len(key) == 1:
+        if type(config[key]) == str:
+            if config[key]:  # only use non-empty strings
                 params[key] = config[key]
-            else:
-                if config[key] != 0:  # if zero, skip and use defaults
-                    params[key] = config[key]
-                # else ignore (could this caus a problem?)
-    
-    context.gear_dict['param_list'] =  params
+        else:
+            params[key] = config[key]
+
+    context.gear_dict['param_list'] = params
 
 
 def validate(context):
@@ -65,22 +54,24 @@ def validate(context):
     if 'n_cpus' in param_list:
 
         cpu_count = context.gear_dict['cpu_count']
-        str_cpu_count = str(cpu_count)
 
         if param_list['n_cpus'] > cpu_count:
-            log.warning('n_cpus > number available, using ' + str_cpu_count)
+            log.warning('n_cpus > number available, using %d', cpu_count)
             param_list['n_cpus'] = cpu_count
 
-    else: #  Default is to use all cpus available
-        # zoom zomm
-        param_list['n_cpus'] = context.gear_dict['cpu_count']
+        elif param_list['n_cpus'] == 0:
+            log.info('n_cpus == 0, using %d (maximum available)', cpu_count)
+            param_list['n_cpus'] = cpu_count
+
+    else:  # Default is to use all cpus available
+        param_list['n_cpus'] = context.gear_dict['cpu_count']  # zoom zoom
 
 
 def build_command(context):
     """
     command is a list of prepared commands
-    param_list is a dictionary of key:value pairs to be put into the command list
-    as such ("-k value" or "--key=value")
+    param_list is a dictionary of key:value pairs to be put into the command
+    list as such ("-k value" or "--key=value")
     """
 
     log.debug('')
@@ -110,12 +101,14 @@ def build_command(context):
                 else:
                     # check for argparse nargs='*' lists of multiple values so
                     #  append it like '--key val1 val2 ...'
-                    if (isinstance(param_list[key], str) and len(param_list[key].split()) > 1):
-                    # then it is a list of multiple things: e.g. "--modality T1w T2w"
+                    if (isinstance(param_list[key], str) and
+                       len(param_list[key].split()) > 1):
+                        # then it is a list of multiple things:
+                        #  e.g. "--modality T1w T2w"
                         command.append('--' + key)
                         for item in param_list[key].split():
                             command.append(item)
-                    else: # single value so append it like '--key=value'
+                    else:  # single value so append it like '--key=value'
                         command.append('--' + key + '=' + str(param_list[key]))
         if key == 'verbose':
             # handle a 'count' argparse argument where manifest gives
@@ -124,6 +117,3 @@ def build_command(context):
             command[-1] = '-' + param_list[key]
 
     return command
-
-
-# vi:set autoindent ts=4 sw=4 expandtab : See Vim, :help 'modeline'
