@@ -251,12 +251,12 @@
     },
     "write-graph": {
       "description": "Write workflow graph",
-      "default": true,
+      "default": false,
       "type": "boolean"
     },
     "stop-on-first-crash": {
       "description": "Force stopping on first crash, even if a work directory was specified",
-      "default": true,
+      "default": false,
       "type": "boolean"
     },
     "notrack": {
