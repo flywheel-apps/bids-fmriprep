@@ -5,3 +5,5 @@ This can run at the
 [project](https://docs.flywheel.io/hc/en-us/articles/360017808354-EM-6-1-x-Release-Notes), 
 [subject](https://docs.flywheel.io/hc/en-us/articles/360038261213-Run-an-analysis-gear-on-a-subject) or 
 [session](https://docs.flywheel.io/hc/en-us/articles/360015505453-Analysis-Gears) level.
+
+This gear requires a Freesurfer license.  The license can be provided to the gear in 3 ways.  See [How to include a Freesurfer license file...](https://docs.flywheel.io/hc/en-us/articles/360013235453).
