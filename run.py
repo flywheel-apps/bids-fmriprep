@@ -1,345 +1,401 @@
 #!/usr/bin/env python3
-""" Run the gear: set up for and call command-line code """
+"""Run the gear: set up for and call command-line command."""
 
 import json
 import os
-import subprocess as sp
-import sys
 import shutil
+import sys
+from pathlib import Path
+
+import flywheel_gear_toolkit
 import psutil
-import glob
+from flywheel_gear_toolkit.interfaces.command_line import (
+    build_command_list,
+    exec_command,
+)
+from flywheel_gear_toolkit.licenses.freesurfer import install_freesurfer_license
+from flywheel_gear_toolkit.utils.zip_tools import zip_output
 
-import flywheel
-from utils import args
-from utils.bids.download_bids import *
-from utils.bids.validate_bids import *
-from utils.fly.custom_log import *
-from utils.fly.load_manifest_json import *
-from utils.fly.make_file_name_safe import *
-from utils.results.set_zip_name import set_zip_head
+from utils.bids.download_run_level import download_bids_for_runlevel
+from utils.bids.run_level import get_run_level_and_hierarchy
+from utils.dry_run import pretend_it_ran
+from utils.fly.make_file_name_safe import make_file_name_safe
 from utils.results.zip_htmls import zip_htmls
-from utils.results.zip_output import zip_output
-from utils.results.zip_intermediate import zip_all_intermediate_output
-from utils.results.zip_intermediate import zip_intermediate_selected
-from utils.results.zip_intermediate import zip_intermediate_selected
-import utils.dry_run
+from utils.results.zip_intermediate import (
+    zip_all_intermediate_output,
+    zip_intermediate_selected,
+)
 
 
-def initialize(context):
+GEAR = "bids-fmriprep"
+REPO = "flywheel-apps"
+CONTAINER = f"{REPO}/{GEAR}]"
 
-    # Add manifest.json as the manifest_json attribute
-    setattr(context, 'manifest_json', load_manifest_json())
+BIDS_APP = "fmriprep"
 
-    log = custom_log(context)
+# What level to run at (positional_argument #3)
+ANALYSIS_LEVEL = "participant"
 
-    context.log_config() # not configuring the log but logging the config
+# when downloading BIDS Limit download to specific folders
+DOWNLOAD_MODALITIES = ['anat', 'func', 'fmap']  # empty list is no limit
 
-    # Instantiate custom gear dictionary to hold "gear global" info
-    context.gear_dict = {}
+# Whether or not to include src data (e.g. dicoms) when downloading BIDS
+DOWNLOAD_SOURCE = False
 
-    # The main command line command to be run:
-    context.gear_dict['COMMAND'] = 'fmriprep'
+# Constants that do not need to be changed
+FREESURFER_LICENSE = "/opt/freesurfer/license.txt"
+ENVIRONMENT_FILE = "/tmp/gear_environ.json"
+
+
+def set_performance_config(config, log):
+    """Set run-time performance config params to pass to BIDS App.
+
+    Set --n_cpus (number of threads) and --mem_mb (maximum memory to use).
+    Use the given number unless it is too big.  Use the max available if zero.
+
+    The user may want to set these number to less than the maximum if using a
+    shared compute resource.
+
+    Args:
+        config (GearToolkitContext.config): run-time options from config.json
+        log (GearToolkitContext().log): logger set up by Gear Toolkit
+
+    Results:
+        sets config["n_cpus"] which will become part of the command line command
+        sets config["mem_mb"] which will become part of the command line command
+    """
+
+    os_cpu_count = os.cpu_count()
+    log.info("os.cpu_count() = %d", os_cpu_count)
+    n_cpus = config.get("n_cpus")
+    if n_cpus:
+        if n_cpus > os_cpu_count:
+            log.warning("n_cpus > number available, using max %d", os_cpu_count)
+            config["n_cpus"] = os_cpu_count
+        else:
+            log.info("n_cpus using %d from config", n_cpus)
+    else:  # Default is to use all cpus available
+        config["n_cpus"] = os_cpu_count  # zoom zoom
+        log.info("using n_cpus = %d (maximum available)", os_cpu_count)
+
+    psutil_mem_mb = int(psutil.virtual_memory().available / (1024 ** 2))
+    log.info("psutil.virtual_memory().available= {:8.2f} MiB".format(psutil_mem_mb))
+    mem_mb = config.get("mem_mb")
+    if mem_mb:
+        if mem_mb > psutil_mem_mb:
+            log.warning("mem_mb > number available, using max %d", psutil_mem_mb)
+            config["mem_mb"] = psutil_mem_mb
+        else:
+            log.info("mem_mb using %d from config", n_cpus)
+    else:  # Default is to use all cpus available
+        config["mem_mb"] = psutil_mem_mb
+        log.info("using mem_mb = %d (maximum available)", psutil_mem_mb)
+
+
+def get_and_log_environment(log):
+    """Grab and log environment for to use when executing command line.
+
+    The shell environment is saved into a file at an appropriate place in the Dockerfile.
+
+    Args:
+        log (GearToolkitContext().log): logger set up by Gear Toolkit
+
+    Returns: (nothing)
+    """
+    with open(ENVIRONMENT_FILE, "r") as f:
+        environ = json.load(f)
+
+        # Add environment to log if debugging
+        kv = ""
+        for k, v in environ.items():
+            kv += k + "=" + v + " "
+        log.debug("Environment: " + kv)
+
+    return environ
+
+
+def generate_command(config, work_dir, output_analysis_id_dir, log, errors, warnings):
+    """Build the main command line command to run.
+
+    Args:
+        config (GearToolkitContext.config): run-time options from config.json
+        work_dir (path): scratch directory where non-saved files can be put
+        output_analysis_id_dir (path): directory where output will be saved
+        log (GearToolkitContext().log): logger set up by Gear Toolkit
+        errors (list of str): error messages
+        warnings (list of str): warning messages
+
+    Returns:
+        cmd (list of str): command to execute
+    """
+
+    # start with the command itself:
+    cmd = [BIDS_APP, str(work_dir / "bids"), str(output_analysis_id_dir), ANALYSIS_LEVEL]
+
+    # 3 positional args: bids path, output dir, 'participant'
+    # This should be done here in case there are nargs='*' arguments
+    # These follow the BIDS Apps definition (https://github.com/BIDS-Apps)
+
+    # get parameters to pass to the command by skipping gear config parameters
+    # (which start with "gear-").
+    command_parameters = {}
+    for key, val in config.items():
+
+        # these arguments are passed directly to the command as is
+        if key == "bids_app_args":
+            bids_app_args = val.split(" ")
+            for baa in bids_app_args:
+                cmd.append(baa)
+
+        elif not key.startswith("gear-"):
+            command_parameters[key] = val
+
+    # Validate the command parameter dictionary - make sure everything is
+    # ready to run so errors will appear before launching the actual gear
+    # code.  Add descriptions of problems to errors & warnings lists.
+    # print("command_parameters:", json.dumps(command_parameters, indent=4))
+
+    cmd = build_command_list(cmd, command_parameters)
+
+    for ii, cc in enumerate(cmd):
+        if cc.startswith("--verbose"):
+            # handle a 'count' argparse argument where manifest gives
+            # enumerated possibilities like v, vv, or vvv
+            # e.g. replace "--verbose=vvv' with '-vvv'
+            cmd[ii] = "-" + cc.split("=")[1]
+
+    log.info("command is: %s", str(cmd))
+    return cmd
+
+
+def main(gtk_context):
 
     # Keep a list of errors and warning to print all in one place at end of log
     # Any errors will prevent the command from running and will cause exit(1)
-    context.gear_dict['errors'] = []  
-    context.gear_dict['warnings'] = []
+    errors = []
+    warnings = []
 
-    # Get level of run from destination's parent: subject or session
-    fw = context.client
-    dest_container = fw.get(context.destination['id'])
-    context.gear_dict['run_level'] = dest_container.parent.type
-    log.info('Running at the ' + context.gear_dict['run_level'] + ' level.')
+    # run-time configuration options from the gear's context.json
+    config = gtk_context.config
 
-    project_id = dest_container.parents.project
-    context.gear_dict['project_id'] = project_id
-    if project_id:
-        project = fw.get(project_id)
-        context.gear_dict['project_label'] = project.label
-        context.gear_dict['project_label_safe'] = \
-            make_file_name_safe(project.label, '_')
+    # Setup basic logging and log the configuration for this job
+    if config["gear-log-level"] == "INFO":
+        gtk_context.init_logging("info")
     else:
-        context.gear_dict['project_label'] = 'unknown_project'
-        context.gear_dict['project_label_safe'] = 'unknown_project'
-        log.warning('Project label is ' + context.gear_dict['project_label'])
+        gtk_context.init_logging("debug")
+    gtk_context.log_config()
+    log = gtk_context.log
 
-    subject_id = dest_container.parents.subject
-    context.gear_dict['subject_id'] = subject_id
-    if subject_id:
-        subject = fw.get(subject_id)
-        context.gear_dict['subject_code'] = subject.code
-        context.gear_dict['subject_code_safe'] = \
-            make_file_name_safe(subject.code, '_')
+    # Given the destination container, figure out if running at the project,
+    # subject, or session level.
+    destination_id = gtk_context.destination["id"]
+    hierarchy = get_run_level_and_hierarchy(gtk_context.client, destination_id)
+
+    # This is the label of the project, subject or session and is used
+    # as part of the name of the output files.
+    run_label = make_file_name_safe(hierarchy["run_label"])
+
+    # Output will be put into a directory named as the destination id.
+    # This allows the raw output to be deleted so that a zipped archive
+    # can be returned.
+    output_analysis_id_dir = gtk_context.output_dir / destination_id
+
+    # set # threads and max memory to use
+    set_performance_config(config, log)
+
+    environ = get_and_log_environment(log)
+
+    if Path(FREESURFER_LICENSE).exists():
+        log.debug("%s exists.", FREESURFER_LICENSE)
+    install_freesurfer_license(gtk_context, FREESURFER_LICENSE)
+
+    command = generate_command(
+        config, gtk_context.work_dir, output_analysis_id_dir, log, errors, warnings
+    )
+
+    # This is used as part of the name of output files
+    command_name = make_file_name_safe(command[0])
+
+    # Download BIDS Formatted data
+    if len(errors) == 0:
+
+        # Create HTML file that shows BIDS "Tree" like output
+        tree = True
+        tree_title = f"{command_name} BIDS Tree"
+
+        error_code = download_bids_for_runlevel(
+            gtk_context,
+            hierarchy,
+            tree=tree,
+            tree_title=tree_title,
+            src_data=DOWNLOAD_SOURCE,
+            folders=DOWNLOAD_MODALITIES,
+            dry_run=config.get("gear-dry-run"),
+            do_validate_bids=True if not config.get("skip-bids-validation") else False,
+        )
+        if error_code > 0 and not config.get("gear-ignore-bids-errors"):
+            errors.append(f"BIDS Error(s) detected.  Did not run {CONTAINER}")
+
     else:
-        context.gear_dict['subject_code'] = 'unknown_subject'
-        context.gear_dict['subject_code_safe'] = 'unknown_subject'
-        log.warning('Subject code is ' + context.gear_dict['subject_code'])
+        log.info("Did not download BIDS because of previous errors")
+        print(errors)
 
-    session_id = dest_container.parents.session
-    context.gear_dict['session_id'] = session_id
-    if session_id:
-        session = fw.get(session_id)
-        context.gear_dict['session_label'] = session.label
-        context.gear_dict['session_label_safe'] = \
-            make_file_name_safe(session.label, '_')
-    else:
-        context.gear_dict['session_label'] = 'unknown_session'
-        context.gear_dict['session_label_safe'] = 'unknown_session'
-        log.warning('Session label is ' + context.gear_dict['session_label'])
+    # Don't run if there were errors or if this is a dry run
+    ok_to_run = True
+    return_code = 0
 
-    # Set first part of result zip file names based on the above file safe names
-    set_zip_head(context)
+    if len(errors) > 0:
+        ok_to_run = False
+        return_code = 1
+        log.info("Command was NOT run because of previous errors.")
 
-    # the usual BIDS path:
-    bids_path = os.path.join(context.work_dir, 'bids')
-    context.gear_dict['bids_path'] = bids_path
+    elif config.get("gear-dry-run"):
+        ok_to_run = False
+        return_code = 0
+        e = "gear-dry-run is set: Command was NOT run."
+        log.warning(e)
+        warnings.append(e)
+        pretend_it_ran(gtk_context)
 
-    # in the output/ directory, add extra analysis_id directory name for easy
-    #  zipping of final outputs to return.
-    context.gear_dict['output_analysisid_dir'] = \
-        context.output_dir + '/' + context.destination['id']
-
-    # get # cpu's to set --n_cpus argument
-    cpu_count = os.cpu_count()
-    log.info('os.cpu_count() = ' + str(cpu_count))
-    context.gear_dict['cpu_count'] = cpu_count
-
-    log.info('psutil.virtual_memory().total= {:4.1f} GiB'.format(
-                      psutil.virtual_memory().total / (1024 ** 3)))
-    log.info('psutil.virtual_memory().available= {:4.1f} GiB'.format(
-                      psutil.virtual_memory().available / (1024 ** 3)))
-
-    # grab environment for gear
-    with open('/tmp/gear_environ.json', 'r') as f:
-        environ = json.load(f)
-        context.gear_dict['environ'] = environ
-
-        # Add environment to log if debugging
-        kv = ''
-        for k, v in environ.items():
-            kv += k + '=' + v + ' '
-        log.debug('Environment: ' + kv)
-
-    return log
-
-
-def create_command(context, log):
-
-    # Create the command and validate the given arguments
     try:
-
-        # Set the actual gear command:
-        command = [context.gear_dict['COMMAND']]
-
-        # 3 positional args: bids path, output dir, 'participant'
-        # This should be done here in case there are nargs='*' arguments
-        # These follow the BIDS Apps definition (https://github.com/BIDS-Apps)
-        command.append(context.gear_dict['bids_path'])
-        command.append(context.gear_dict['output_analysisid_dir'])
-        command.append('participant')
-
-        # Put command into gear_dict so arguments can be added in args.
-        context.gear_dict['command'] = command
-
-        # Process inputs, contextual values and build a dictionary of
-        # key-value arguments specific for COMMAND
-        args.get_inputs_and_args(context)
-
-        # Validate the command parameter dictionary - make sure everything is 
-        # ready to run so errors will appear before launching the actual gear 
-        # code.  Raises Exception on fail
-        args.validate(context)
-
-        # Build final command-line (a list of strings)
-        command = args.build_command(context)
-
-    except Exception as e:
-        context.gear_dict['errors'].append(e)
-        log.critical(e)
-        log.exception('Error in creating and validating command.',)
-
-
-def set_up_data(context, log):
-    # Set up and validate data to be used by command
-    try:
-
-        # Download bids for the current session 
-        # bool src_data: Whether or not to include src data (e.g. dicoms) default: False
-        # list subjects: The list of subjects to include (via subject code) otherwise all subjects
-        # list sessions: The list of sessions to include (via session label) otherwise all sessions
-        # list folders: The list of folders to include (otherwise all folders) e.g. ['anat', 'func']
-        # **kwargs: Additional arguments to pass to download_bids_dir
-
-        folders_to_load = ['anat', 'func', 'fmap']
-
-        if context.gear_dict['run_level'] == 'project':
-
-            log.info('Downloading BIDS for project "' + 
-                     context.gear_dict['project_label'] + '"')
-
-            # don't filter by subject or session, grab all
-            download_bids(context, folders=folders_to_load)
-
-        elif context.gear_dict['run_level'] == 'subject':
-
-            log.info('Downloading BIDS for subject "' + 
-                     context.gear_dict['subject_code'] + '"')
-
-            # filter by subject
-            download_bids(context, 
-                      subjects = [context.gear_dict['subject_code']],
-                      folders=folders_to_load)
-
-        elif context.gear_dict['run_level'] == 'session':
-
-            log.info('Downloading BIDS for session "' + 
-                     context.gear_dict['session_label'] + '"')
-
-            # filter by session
-            download_bids(context, 
-                      subjects = [context.gear_dict['subject_code']],
-                      sessions = [context.gear_dict['session_label']],
-                      folders=folders_to_load)
-
-        else:
-            msg = 'This job is not being run at the project subject or ' +\
-                  'session level'
-            raise TypeError(msg)
-
-        # Validate Bids file heirarchy
-        # Bids validation on a phantom tree may be occuring soon
-        validate_bids(context)
-
-    except Exception as e:
-        context.gear_dict['errors'].append(e)
-        log.critical(e)
-        log.exception('Error in BIDS download and validation.',)
-
-
-def execute(context, log):
-    try:
-
-        log.info('Command: ' + ' '.join(context.gear_dict['command']))
-
-        # Don't run if there were errors or if this is a dry run
-        ok_to_run = True
-
-        if len(context.gear_dict['errors']) > 0:
-            ok_to_run = False
-            result = sp.CompletedProcess
-            result.returncode = 1
-            log.info('Command was NOT run because of previous errors.')
-
-        elif context.config['gear-dry-run']:
-            ok_to_run = False
-            result = sp.CompletedProcess
-            result.returncode = 0
-            e = 'gear-dry-run is set: Command was NOT run.'
-            log.warning(e)
-            context.gear_dict['warnings'].append(e)
-            utils.dry_run.pretend_it_ran(context)
 
         if ok_to_run:
-            # Run the actual command this gear was created for
-            result = sp.run(context.gear_dict['command'], 
-                        env = context.gear_dict['environ'])
-            log.debug(repr(result))
 
-        log.info('Return code: ' + str(result.returncode))
+            # Create output directory
+            log.info("Creating output directory %s", output_analysis_id_dir)
+            Path(output_analysis_id_dir).mkdir()
 
-        if result.returncode == 0:
-            log.info('Command successfully executed!')
+            # This is what it is all about
+            exec_command(command, environ=environ)
 
-        else:
-            log.info('Command failed.')
-
-    except Exception as e:
-        context.gear_dict['errors'].append(e)
-        log.critical(e)
-        log.exception('Unable to execute command.')
+    except RuntimeError as exc:
+        return_code = 1
+        errors.append(exc)
+        log.critical(exc)
+        log.exception("Unable to execute command.")
 
     finally:
 
-        # Make archives for result *.html files for easy display on platform
-        path = context.gear_dict['output_analysisid_dir'] + \
-                                 '/' + context.gear_dict['COMMAND']
-        zip_htmls(context, path)
+        # Cleanup, move all results to the output directory
+
+        # zip entire output/<analysis_id> folder into
+        #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
+        zip_file_name = (
+            gtk_context.manifest["name"] + f"_{run_label}_{destination_id}.zip"
+        )
+        zip_output(
+            str(gtk_context.output_dir),
+            destination_id,
+            zip_file_name,
+            dry_run=False,
+            exclude_files=None,
+        )
+
+        # zip any .html files in output/<analysis_id>/
+        zip_htmls(gtk_context, output_analysis_id_dir)
 
         # Remove all fsaverage* directories
-        if not context.config['gear-keep-fsaverage']:
-            path = context.gear_dict['output_analysisid_dir'] + \
-                                     '/freesurfer/fsaverage*'
-            fsavg_dirs = glob.glob(path)
+        if not config.get('gear-keep-fsaverage'):
+            path = output_analysis_id_dir / "freesurfer"
+            fsavg_dirs = path.glob("fsaverage*")
             for fsavg in fsavg_dirs:
-                log.info('deleting ' + fsavg)
+                log.info('deleting %s', str(fsavg))
                 shutil.rmtree(fsavg)
         else:
             log.info('Keeping fsaverage directories')
 
-        # save everything in context.gear_dict['output_analysisid_dir']
-        # as the main result
-        zip_output(context)
-
         # possibly save ALL intermediate output
-        if context.config['gear-save-intermediate-output']:
-            zip_all_intermediate_output(context)
+        if config.get("gear-save-intermediate-output"):
+            zip_all_intermediate_output(gtk_context, run_label)
 
         # possibly save intermediate files and folders
-        zip_intermediate_selected(context)
+        zip_intermediate_selected(gtk_context, run_label)
 
         # clean up: remove output that was zipped
-        if os.path.exists(context.gear_dict['output_analysisid_dir']):
-            if not context.config['gear-keep-output']:
+        if Path(output_analysis_id_dir).exists():
+            if not config.get("gear-keep-output"):
 
-                shutil.rmtree(context.gear_dict['output_analysisid_dir'])
-                log.debug('removing output directory "' + 
-                          context.gear_dict['output_analysisid_dir'] + '"')
+                log.debug('removing output directory "%s"', str(output_analysis_id_dir))
+                shutil.rmtree(output_analysis_id_dir)
 
             else:
-                log.info('NOT removing output directory "' + 
-                          context.gear_dict['output_analysisid_dir'] + '"')
+                log.info(
+                    'NOT removing output directory "%s"', str(output_analysis_id_dir)
+                )
 
         else:
-            log.info('Output directory does not exist so it cannot be removed')
+            log.info("Output directory does not exist so it cannot be removed")
 
-        ret = result.returncode
+        # save .metadata file
+        metadata = {
+            "project": {
+                "info": {
+                    "test": "Hello project",
+                    f"{run_label} {destination_id}": "put this here",
+                },
+                "tags": [run_label, destination_id],
+            },
+            "subject": {
+                "info": {
+                    "test": "Hello subject",
+                    f"{run_label} {destination_id}": "put this here",
+                },
+                "tags": [run_label, destination_id],
+            },
+            "session": {
+                "info": {
+                    "test": "Hello session",
+                    f"{run_label} {destination_id}": "put this here",
+                },
+                "tags": [run_label, destination_id],
+            },
+            "analysis": {
+                "info": {
+                    "test": "Hello analysis",
+                    f"{run_label} {destination_id}": "put this here",
+                },
+                "files": [
+                    {
+                        "name": "bids_tree.html",
+                        "info": {
+                            "value1": "foo",
+                            "value2": "bar",
+                            f"{run_label} {destination_id}": "put this here",
+                        },
+                        "tags": ["ein", "zwei"],
+                    }
+                ],
+                "tags": [run_label, destination_id],
+            },
+        }
+        #with open(f"{gtk_context.output_dir}/.metadata.json", "w") as fff:
+        #    json.dump(metadata, fff)
+        #    log.info(f"Wrote {gtk_context.output_dir}/.metadata.json")
 
-        if len(context.gear_dict['warnings']) > 0 :
-            msg = 'Previous warnings:\n'
-            for err in context.gear_dict['warnings']:
-                if str(type(err)).split("'")[1] == 'str':
-                    # show string
-                    msg += '  Warning: ' + str(err) + '\n'
-                else:  # show type (of warning) and warning message
-                    msg += '  ' + str(type(err)).split("'")[1] + ': ' + str(err) + '\n'
+        # Report errors and warnings at the end of the log so they can be easily seen.
+        if len(warnings) > 0:
+            msg = "Previous warnings:\n"
+            for warn in warnings:
+                msg += "  Warning: " + str(warn) + "\n"
             log.info(msg)
 
-        if len(context.gear_dict['errors']) > 0 :
-            msg = 'Previous errors:\n'
-            for err in context.gear_dict['errors']:
-                if str(type(err)).split("'")[1] == 'str':
+        if len(errors) > 0:
+            msg = "Previous errors:\n"
+            for err in errors:
+                if str(type(err)).split("'")[1] == "str":
                     # show string
-                    msg += '  Error msg: ' + str(err) + '\n'
+                    msg += "  Error msg: " + str(err) + "\n"
                 else:  # show type (of error) and error message
-                    msg += '  ' + str(type(err)).split("'")[1] + ': ' + str(err) + '\n'
+                    err_type = str(type(err)).split("'")[1]
+                    msg += f"  {err_type}: {str(err)}\n"
             log.info(msg)
-            ret = 1
+            return_code = 1
 
-        log.info('BIDS App Gear is done.  Returning '+str(ret))
-        os.sys.exit(ret)
- 
+    log.info("%s Gear is done.  Returning %s", CONTAINER, return_code)
 
-if __name__ == '__main__':
-
-    context = flywheel.GearContext()
-
-    log = initialize(context)
-
-    create_command(context, log)
-
-    set_up_data(context, log)
-
-    execute(context, log)
+    return return_code
 
 
-# vi:set autoindent ts=4 sw=4 expandtab : See Vim, :help 'modeline'
+if __name__ == "__main__":
+
+    sys.exit(main(flywheel_gear_toolkit.GearToolkitContext()))

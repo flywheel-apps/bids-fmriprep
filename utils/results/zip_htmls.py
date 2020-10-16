@@ -1,94 +1,75 @@
-# If you edit this file, please consider updating bids-app-template
+"""Compress HTML files."""
 
 import datetime
 import glob
-import os
 import logging
+import os
 import subprocess as sp
-
 
 log = logging.getLogger(__name__)
 
 
 def zip_it_zip_it_good(context, name):
-    """ Compress html file into an appropriately named archive file *.html.zip 
+    """Compress html file into an appropriately named archive file *.html.zip
     files are automatically shown in another tab in the browser. These are
     saved at the top level of the output folder."""
 
     name_no_html = name[:-5]  # remove ".html" from end
 
-    dest_zip = os.path.join(context.output_dir,
-        name_no_html +  '_' + context.destination['id'] + '.html.zip')
+    dest_zip = os.path.join(
+        context.output_dir, name_no_html + "_" + context.destination["id"] + ".html.zip"
+    )
 
     log.info('Creating viewable archive "' + dest_zip + '"')
 
-    command = ['zip', '-q', '-r', dest_zip, 'index.html']
-
-    # find all directories called 'figures' and add them to the archive
-    top = context.gear_dict['output_analysisid_dir']
-    for root, dirs, files in os.walk(top):
-        #print('root = ' + root)
-        for name in dirs:
-            #print(name)
-            if name == 'figures':
-                path = '/'.join(os.path.join(root, name).split('/')[6:])
-                command.append(path)
-                log.info('including "' + path + '"')
-
-    # log command as a string separated by spaces
-    log.info(' '.join(command))
-
+    command = ["zip", "-q", dest_zip, "index.html"]
     result = sp.run(command, check=True)
 
 
 def zip_htmls(context, path):
-    """ Zip all .html files at the given path so they can be displayed
-        on the Flywheel platform.
-        Each html file must be converted into an archive individually:
-          rename each to be "index.html", then create a zip archive from it.  
+    """Zip all .html files at the given path so they can be displayed
+    on the Flywheel platform.
+    Each html file must be converted into an archive individually:
+      rename each to be "index.html", then create a zip archive from it.
     """
 
-
-    log.info('Creating viewable archives for all html files')
+    log.info("Creating viewable archives for all html files")
 
     if os.path.exists(path):
 
-        log.info('Found path: ' + path)
+        log.info("Found path: " + str(path))
 
         os.chdir(path)
 
-        html_files = glob.glob('*.html')
+        html_files = glob.glob("*.html")
 
         if len(html_files) > 0:
 
-            # if there is an index.html, do it first and re-name it for safe 
+            # if there is an index.html, do it first and re-name it for safe
             # keeping
-            save_name = ''
-            if os.path.exists('index.html'):
-                log.info('Found index.html')
-                zip_it_zip_it_good(context, 'index.html', '')
+            save_name = ""
+            if os.path.exists("index.html"):
+                log.info("Found index.html")
+                zip_it_zip_it_good(context, "index.html")
 
                 now = datetime.datetime.now()
-                save_name = now.strftime("%Y-%m-%d_%H-%M-%S") + '_index.html'
-                os.rename('index.html', save_name)
+                save_name = now.strftime("%Y-%m-%d_%H-%M-%S") + "_index.html"
+                os.rename("index.html", save_name)
 
-                html_files.remove('index.html')  # don't do this one later
+                html_files.remove("index.html")  # don't do this one later
 
             for h_file in html_files:
-                os.rename(h_file, 'index.html')
+                os.rename(h_file, "index.html")
                 zip_it_zip_it_good(context, h_file)
-                os.rename('index.html', h_file)
+                os.rename("index.html", h_file)
 
             # reestore if necessary
-            if save_name != '':
-                os.rename(save_name, 'index.html')
+            if save_name != "":
+                os.rename(save_name, "index.html")
 
         else:
-            log.warning('No *.html files at ' + path)
+            log.warning("No *.html files at " + str(path))
 
     else:
 
-        log.error('Path NOT found: ' + path)
-
-
-# vi:set autoindent ts=4 sw=4 expandtab : See Vim, :help 'modeline'
+        log.error("Path NOT found: " + str(path))
