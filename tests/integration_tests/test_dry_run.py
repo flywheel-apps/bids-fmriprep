@@ -44,4 +44,4 @@ def test_dry_run_works(
         assert search_sysout(captured, "folder: ./reportlets/somecmd/sub-TOME3024/anat")
         assert search_syserr(captured, "Could not find file")
         assert search_sysout(captured, "Warning: gear-dry-run is set")
-        #assert Path("/flywheel/v0/output/.metadata.json").exists()
+        # assert Path("/flywheel/v0/output/.metadata.json").exists()

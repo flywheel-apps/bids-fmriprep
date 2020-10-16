@@ -26,7 +26,6 @@ from utils.results.zip_intermediate import (
     zip_intermediate_selected,
 )
 
-
 GEAR = "bids-fmriprep"
 REPO = "flywheel-apps"
 CONTAINER = f"{REPO}/{GEAR}]"
@@ -37,7 +36,7 @@ BIDS_APP = "fmriprep"
 ANALYSIS_LEVEL = "participant"
 
 # when downloading BIDS Limit download to specific folders
-DOWNLOAD_MODALITIES = ['anat', 'func', 'fmap']  # empty list is no limit
+DOWNLOAD_MODALITIES = ["anat", "func", "fmap"]  # empty list is no limit
 
 # Whether or not to include src data (e.g. dicoms) when downloading BIDS
 DOWNLOAD_SOURCE = False
@@ -130,7 +129,12 @@ def generate_command(config, work_dir, output_analysis_id_dir, log, errors, warn
     """
 
     # start with the command itself:
-    cmd = [BIDS_APP, str(work_dir / "bids"), str(output_analysis_id_dir), ANALYSIS_LEVEL]
+    cmd = [
+        BIDS_APP,
+        str(work_dir / "bids"),
+        str(output_analysis_id_dir),
+        ANALYSIS_LEVEL,
+    ]
 
     # 3 positional args: bids path, output dir, 'participant'
     # This should be done here in case there are nargs='*' arguments
@@ -295,14 +299,14 @@ def main(gtk_context):
         zip_htmls(gtk_context, output_analysis_id_dir)
 
         # Remove all fsaverage* directories
-        if not config.get('gear-keep-fsaverage'):
+        if not config.get("gear-keep-fsaverage"):
             path = output_analysis_id_dir / "freesurfer"
             fsavg_dirs = path.glob("fsaverage*")
             for fsavg in fsavg_dirs:
-                log.info('deleting %s', str(fsavg))
+                log.info("deleting %s", str(fsavg))
                 shutil.rmtree(fsavg)
         else:
-            log.info('Keeping fsaverage directories')
+            log.info("Keeping fsaverage directories")
 
         # possibly save ALL intermediate output
         if config.get("gear-save-intermediate-output"):
@@ -368,7 +372,7 @@ def main(gtk_context):
                 "tags": [run_label, destination_id],
             },
         }
-        #with open(f"{gtk_context.output_dir}/.metadata.json", "w") as fff:
+        # with open(f"{gtk_context.output_dir}/.metadata.json", "w") as fff:
         #    json.dump(metadata, fff)
         #    log.info(f"Wrote {gtk_context.output_dir}/.metadata.json")
 
