@@ -235,7 +235,7 @@ def main(gtk_context):
             src_data=DOWNLOAD_SOURCE,
             folders=DOWNLOAD_MODALITIES,
             dry_run=config.get("gear-dry-run"),
-            do_validate_bids=True if not config.get("skip-bids-validation") else False,
+            do_validate_bids=config.get("gear-run-bids-validation"),
         )
         if error_code > 0 and not config.get("gear-ignore-bids-errors"):
             errors.append(f"BIDS Error(s) detected.  Did not run {CONTAINER}")

@@ -2,12 +2,12 @@
   "name": "bids-fmriprep",
   "label": "BIDS fMRIPrep: A Robust Preprocessing Pipeline for fMRI Data",
   "description": "fMRIPrep 20.2.0 (September 28, 2020) is a functional magnetic resonance imaging (fMRI) data preprocessing pipeline that is designed to provide an easily accessible, state-of-the-art interface that is robust to variations in scan acquisition protocols and that requires minimal user input, while providing easily interpretable and comprehensive error and output reporting. It performs basic processing steps (coregistration, normalization, unwarping, noise component extraction, segmentation, skullstripping etc.) providing outputs that can be easily submitted to a variety of group level analyses, including task-based or resting-state fMRI, graph theory measures, surface or volume-based statistics, etc.",
-  "version": "1.1.2_20.2.0",
+  "version": "1.1.6_20.2.0",
   "custom": {
-    "docker-image": "flywheel/bids-fmriprep:1.1.2_20.2.0",
+    "docker-image": "flywheel/bids-fmriprep:1.1.6_20.2.0",
     "gear-builder": {
       "category": "analysis",
-      "image": "flywheel/bids-fmriprep:1.1.2_20.2.0"
+      "image": "flywheel/bids-fmriprep:1.1.6_20.2.0"
     },
     "flywheel": {
       "suite": "BIDS Apps"
@@ -126,12 +126,12 @@
       "type": "string"
     },
     "bold2t1w-init": {
+      "default": "register",
       "description": "Either “register” (the default) to initialize volumes at center or “header” to use the header information when coregistering BOLD to T1w images.",
       "enum": [
         "register",
         "header"
       ],
-      "default": "register",
       "type": "string"
     },
     "bold2t1w-dof": {
@@ -204,13 +204,13 @@
       "type": "boolean"
     },
     "skull-strip-t1w": {
-      "description": "Possible choices: auto, skip, force.  Determiner for T1-weighted skull stripping (‘force’ ensures skull stripping, ‘skip’ ignores skull stripping, and ‘auto’ applies brain extraction based on the outcome of a heuristic to check whether the brain is already masked).",
+      "description": "Possible choices: auto, skip, force.  Determiner for T1-weighted skull stripping (‘force’ ensures skull stripping, ‘skip’ ignores skull stripping, and ‘auto’ applies brain extraction based on the outcome of a heuristic to check whether the brain is already masked).  Default is force.",
       "enum": [
         "auto",
         "skip",
         "force"
       ],
-      "optional": true,
+      "default": "force",
       "type": "string"
     },
     "fmap-bspline": {
@@ -276,10 +276,11 @@
     "debug": {
       "description": "Possible choices: compcor, all.  Debug mode(s) to enable. ‘all’ is alias for all available modes.",
       "enum": [
+        "",
         "compcor",
         "all"
       ],
-      "optional": true,
+      "default": "",
       "type": "string"
     },
     "gear-log-level": {
