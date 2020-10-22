@@ -284,12 +284,17 @@
     },
     "gear-log-level": {
       "default": "INFO",
-      "description": "Gear Log verbosity level (ERROR|WARNING|INFO|DEBUG)",
+      "description": "Gear Log verbosity level (INFO|DEBUG)",
       "type": "string",
                         "enum": [
                                 "INFO",
                                 "DEBUG"
                         ]
+    },
+    "gear-run-bids-validation": {
+      "default": false,
+      "description": "Gear will run BIDS validation before running fMRIPrep and print out all warnings and errors.  fMRIPrep runs a version of the bids validator so having the gear run it is not necessary, but might be informative.  If validation fails and gear-abort-on-bids-error is true, mriq will NOT be run.",
+      "type": "boolean"
     },
     "gear-save-intermediate-output": {
       "default": false,
