@@ -182,6 +182,8 @@ def main(gtk_context):
     # run-time configuration options from the gear's context.json
     config = gtk_context.config
 
+    dry_run = config.get("gear-dry-run")
+
     # Setup basic logging and log the configuration for this job
     if config["gear-log-level"] == "INFO":
         gtk_context.init_logging("info")
@@ -234,7 +236,7 @@ def main(gtk_context):
             tree_title=tree_title,
             src_data=DOWNLOAD_SOURCE,
             folders=DOWNLOAD_MODALITIES,
-            dry_run=config.get("gear-dry-run"),
+            dry_run=dry_run,
             do_validate_bids=config.get("gear-run-bids-validation"),
         )
         if error_code > 0 and not config.get("gear-ignore-bids-errors"):
@@ -245,32 +247,29 @@ def main(gtk_context):
         print(errors)
 
     # Don't run if there were errors or if this is a dry run
-    ok_to_run = True
     return_code = 0
 
     if len(errors) > 0:
-        ok_to_run = False
         return_code = 1
         log.info("Command was NOT run because of previous errors.")
 
-    elif config.get("gear-dry-run"):
-        ok_to_run = False
-        return_code = 0
-        e = "gear-dry-run is set: Command was NOT run."
-        log.warning(e)
-        warnings.append(e)
-        pretend_it_ran(gtk_context)
-
     try:
 
-        if ok_to_run:
+        if dry_run:
+            e = "gear-dry-run is set: Command was NOT run."
+            log.warning(e)
+            warnings.append(e)
+            pretend_it_ran(gtk_context)
 
+        else:
             # Create output directory
             log.info("Creating output directory %s", output_analysis_id_dir)
             Path(output_analysis_id_dir).mkdir()
 
             # This is what it is all about
-            exec_command(command, environ=environ)
+            exec_command(
+                command, environ=environ, dry_run=dry_run, shell=True, cont_output=True,
+            )
 
     except RuntimeError as exc:
         return_code = 1
@@ -294,9 +293,6 @@ def main(gtk_context):
             dry_run=False,
             exclude_files=None,
         )
-
-        # zip any .html files in output/<analysis_id>/
-        zip_htmls(gtk_context, output_analysis_id_dir)
 
         # Remove all fsaverage* directories
         if not config.get("gear-keep-fsaverage"):
