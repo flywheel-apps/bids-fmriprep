@@ -8,8 +8,7 @@ from pathlib import Path
 
 from flywheel import ApiException
 from flywheel_bids.export_bids import download_bids_dir
-
-from utils.bids.errors import BIDSExportError
+from flywheel_bids.supporting_files.errors import BIDSExportError
 
 from .tree import tree_bids
 from .validate import validate_bids
@@ -155,6 +154,7 @@ def download_bids_for_runlevel(
 
     else:
 
+        # The destination is usually an analysis.  If not, say what's going on
         if gtk_context.destination["type"] == "analysis":
             pass
 
@@ -200,7 +200,7 @@ def download_bids_for_runlevel(
                     'Downloading BIDS for project "%s"', hierarchy["project_label"]
                 )
 
-                if Path(bids_dir).exists():
+                if Path(bids_dir).exists():  #  This happens during testing
                     bids_path = bids_dir
                     log.info(f"Not actually downloading it because {bids_dir} exists")
                 else:
@@ -304,7 +304,7 @@ def download_bids_for_runlevel(
             bids_path = None
             err_code = 25  # download_bids_dir() ApiException
 
-    if bids_path:  # then validate it
+    if bids_path:  # then the string was set so check if the directory exists
 
         if Path(bids_path).exists():
             log.info("Found BIDS path %s", str(bids_path))

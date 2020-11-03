@@ -29,10 +29,6 @@ def test_tree_bids_basic_results_works(caplog, tmp_path):
     with open("tree_out.html") as tfp:
         html = tfp.read().split("\n")
 
-    # for lll,line in enumerate(html):
-    #     print(f'{lll:02} {line}')
-    # print(caplog.records)
-
     assert len(caplog.records) == 2
     assert Path("tree_out.html").exists()
     assert html[10] == "work/bids/"  # has trailing '/'
@@ -61,10 +57,6 @@ def test_tree_bids_directory_none_title_extra_work(caplog, tmp_path):
 
     with open("tree_out.html") as tfp:
         html = tfp.read().split("\n")
-
-    # for lll,line in enumerate(html):
-    #     print(f'{lll:02} {line}')
-    # print(caplog.records)
 
     assert len(caplog.records) == 2
     assert Path("tree_out.html").exists()

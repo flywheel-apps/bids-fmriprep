@@ -89,15 +89,14 @@ def call_validate_bids(bids_path, out_path):
         result = sp.CompletedProcess
         result.returncode = err.returncode
 
-    msg = command[0] + " return code: " + str(result.returncode)
-    log.info(msg)
+    log.info(f"{command[0]} return code: {result.returncode}")
 
     # read validation result file to get results as dictionary
     try:
         with open(out_path) as jfp:
             bids_output = json.load(jfp)
 
-    except json.JSONDecodeError as err:
+    except json.JSONDecodeError as err:  # in case non-json in output
         log.error(repr(err))
         with open(out_path) as jfp:
             bids_output = jfp.read()

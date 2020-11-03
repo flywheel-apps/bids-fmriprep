@@ -11,6 +11,10 @@ from flywheel_gear_toolkit.utils.zip_tools import unzip_archive
 
 import run
 
+WORK = (
+    "/flywheel/v0/output/bids-fmriprep_work_ses-Session2_5ebbfe82bfda51026d6aa079.zip"
+)
+
 
 def test_dry_run_works(
     capfd,
@@ -40,8 +44,13 @@ def test_dry_run_works(
         assert search_stdout_contains(captured, "command is", "'arg1', 'arg2'")
         assert search_syserr(captured, "No BIDS errors detected.")
         assert search_sysout(captured, "Zipping work directory")
-        assert search_sysout(captured, "file:   ./bids/dataset_description.json")
-        assert search_sysout(captured, "folder: ./reportlets/somecmd/sub-TOME3024/anat")
-        assert search_syserr(captured, "Could not find file")
+        assert search_sysout(captured, "Zipping work/bids/dataset_description.json")
+        assert search_sysout(
+            captured, "Zipping work/reportlets/somecmd/sub-TOME3024/anat"
+        )
+        assert search_sysout(
+            captured, "Looked for anatsub-TOME3024_desc-about_T1w.html"
+        )
         assert search_sysout(captured, "Warning: gear-dry-run is set")
         # assert Path("/flywheel/v0/output/.metadata.json").exists()
+        assert Path(WORK).exists()

@@ -17,10 +17,9 @@ from flywheel_gear_toolkit.licenses.freesurfer import install_freesurfer_license
 from flywheel_gear_toolkit.utils.zip_tools import zip_output
 
 from utils.bids.download_run_level import download_bids_for_runlevel
-from utils.bids.run_level import get_run_level_and_hierarchy
+from utils.bids.run_level import get_analysis_run_level_and_hierarchy
 from utils.dry_run import pretend_it_ran
 from utils.fly.make_file_name_safe import make_file_name_safe
-from utils.results.zip_htmls import zip_htmls
 from utils.results.zip_intermediate import (
     zip_all_intermediate_output,
     zip_intermediate_selected,
@@ -195,7 +194,7 @@ def main(gtk_context):
     # Given the destination container, figure out if running at the project,
     # subject, or session level.
     destination_id = gtk_context.destination["id"]
-    hierarchy = get_run_level_and_hierarchy(gtk_context.client, destination_id)
+    hierarchy = get_analysis_run_level_and_hierarchy(gtk_context.client, destination_id)
 
     # This is the label of the project, subject or session and is used
     # as part of the name of the output files.
@@ -249,13 +248,13 @@ def main(gtk_context):
     # Don't run if there were errors or if this is a dry run
     return_code = 0
 
-    if len(errors) > 0:
-        return_code = 1
-        log.info("Command was NOT run because of previous errors.")
-
     try:
 
-        if dry_run:
+        if len(errors) > 0:
+            return_code = 1
+            log.info("Command was NOT run because of previous errors.")
+
+        elif dry_run:
             e = "gear-dry-run is set: Command was NOT run."
             log.warning(e)
             warnings.append(e)
@@ -325,52 +324,6 @@ def main(gtk_context):
 
         else:
             log.info("Output directory does not exist so it cannot be removed")
-
-        # save .metadata file
-        metadata = {
-            "project": {
-                "info": {
-                    "test": "Hello project",
-                    f"{run_label} {destination_id}": "put this here",
-                },
-                "tags": [run_label, destination_id],
-            },
-            "subject": {
-                "info": {
-                    "test": "Hello subject",
-                    f"{run_label} {destination_id}": "put this here",
-                },
-                "tags": [run_label, destination_id],
-            },
-            "session": {
-                "info": {
-                    "test": "Hello session",
-                    f"{run_label} {destination_id}": "put this here",
-                },
-                "tags": [run_label, destination_id],
-            },
-            "analysis": {
-                "info": {
-                    "test": "Hello analysis",
-                    f"{run_label} {destination_id}": "put this here",
-                },
-                "files": [
-                    {
-                        "name": "bids_tree.html",
-                        "info": {
-                            "value1": "foo",
-                            "value2": "bar",
-                            f"{run_label} {destination_id}": "put this here",
-                        },
-                        "tags": ["ein", "zwei"],
-                    }
-                ],
-                "tags": [run_label, destination_id],
-            },
-        }
-        # with open(f"{gtk_context.output_dir}/.metadata.json", "w") as fff:
-        #    json.dump(metadata, fff)
-        #    log.info(f"Wrote {gtk_context.output_dir}/.metadata.json")
 
         # Report errors and warnings at the end of the log so they can be easily seen.
         if len(warnings) > 0:

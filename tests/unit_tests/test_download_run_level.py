@@ -8,12 +8,12 @@ from unittest.mock import patch
 
 import flywheel
 import flywheel_gear_toolkit
+from flywheel_bids.supporting_files.errors import BIDSExportError
 
 from utils.bids.download_run_level import (
     download_bids_for_runlevel,
     fix_dataset_description,
 )
-from utils.bids.errors import BIDSExportError
 
 DATASET_DESCRIPTION = {
     "Acknowledgements": "",
@@ -267,12 +267,12 @@ def test_download_bids_for_runlevel_bad_destination_noted(tmp_path, caplog):
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
 
 
-def test_download_bids_for_runlevel_unknown_acqusition_detected(tmp_path, caplog):
+def test_download_bids_for_runlevel_unknown_acquisition_detected(tmp_path, caplog):
 
     caplog.set_level(logging.DEBUG)
 
     hierarchy = copy.deepcopy(HIERARCHY)
-    hierarchy["acquisition_label"] = "unknown acqusition"
+    hierarchy["acquisition_label"] = "unknown acquisition"
 
     # create expected file
     bids_path = Path(tmp_path) / "work/bids"
@@ -307,8 +307,8 @@ def test_download_bids_for_runlevel_unknown_acqusition_detected(tmp_path, caplog
                     dry_run=True,
                 )
 
-    assert len(caplog.records) == 8
-    assert 'acquisition "unknown acqusition"' in caplog.records[3].message
+    assert len(caplog.records) == 5
+    assert 'acquisition "unknown acquisition"' in caplog.records[3].message
 
 
 def test_download_bids_for_runlevel_session_works(tmp_path, caplog):
@@ -436,12 +436,6 @@ def test_download_bids_for_runlevel_bidsexporterror_exception_detected(
 ):
 
     caplog.set_level(logging.DEBUG)
-
-    ## create expected file
-    # bids_path = Path(tmp_path) / "work/bids"
-    # bids_path.mkdir(parents=True)
-    # with open(bids_path / "dataset_description.json", "w") as jfp:
-    #    json.dump(DATASET_DESCRIPTION, jfp)
 
     with patch(
         "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),

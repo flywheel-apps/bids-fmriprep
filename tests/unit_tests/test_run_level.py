@@ -7,8 +7,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import flywheel
+import pytest
 
-from utils.bids.run_level import get_run_level_and_hierarchy
+from utils.bids.run_level import get_analysis_run_level_and_hierarchy
 
 
 class Acquisition:
@@ -46,6 +47,7 @@ class Destination:
             "session": "sess_id",
             "acquisition": "acq_id",
         }
+        self.container_type = "analysis"
 
     def get(self, level, none):
         return self.parent
@@ -79,19 +81,19 @@ def test_run_level_project_works(caplog):
     fw.destination.parents["session"] = None
     fw.destination.parents["acquisition"] = None
 
-    hierarchy = get_run_level_and_hierarchy(fw, "01234")
+    hierarchy = get_analysis_run_level_and_hierarchy(fw, "01234")
 
     print(caplog.records)
 
     assert hierarchy["run_level"] == "project"
     assert hierarchy["group"] == "monkeyshine"
-    assert len(caplog.records) == 6
-    assert "run_level = project" in caplog.records[0].message
-    assert "monkeyshine" in caplog.records[1].message
-    assert "TheProjectLabel" in caplog.records[2].message
-    assert "subject_label = unknown subject" in caplog.records[3].message
-    assert "session_label = unknown session" in caplog.records[4].message
-    assert "acquisition_label = unknown acquisition" in caplog.records[5].message
+    assert len(caplog.records) == 1
+    assert "'run_level': 'project'" in caplog.records[0].message
+    assert "monkeyshine" in caplog.records[0].message
+    assert "TheProjectLabel" in caplog.records[0].message
+    assert hierarchy["subject_label"] == None
+    assert hierarchy["session_label"] == None
+    assert hierarchy["acquisition_label"] == None
 
 
 def test_run_level_subject_works(caplog):
@@ -103,18 +105,18 @@ def test_run_level_subject_works(caplog):
     fw.destination.parents["session"] = None
     fw.destination.parents["acquisition"] = None
 
-    hierarchy = get_run_level_and_hierarchy(fw, "01234")
+    hierarchy = get_analysis_run_level_and_hierarchy(fw, "01234")
 
     print(caplog.records)
 
     assert hierarchy["run_level"] == "subject"
-    assert len(caplog.records) == 6
-    assert "run_level = subject" in caplog.records[0].message
-    assert "monkeyshine" in caplog.records[1].message
-    assert "TheProjectLabel" in caplog.records[2].message
-    assert "subject_label = TheSubjectCode" in caplog.records[3].message
-    assert "session_label = unknown session" in caplog.records[4].message
-    assert "acquisition_label = unknown acquisition" in caplog.records[5].message
+    assert len(caplog.records) == 1
+    assert "'run_level': 'subject'" in caplog.records[0].message
+    assert "monkeyshine" in caplog.records[0].message
+    assert "TheProjectLabel" in caplog.records[0].message
+    assert hierarchy["subject_label"] == "TheSubjectCode"
+    assert hierarchy["session_label"] == None
+    assert hierarchy["acquisition_label"] == None
 
 
 def test_run_level_session_works(caplog):
@@ -125,18 +127,18 @@ def test_run_level_session_works(caplog):
     fw = FW("session")
     fw.destination.parents["acquisition"] = None
 
-    hierarchy = get_run_level_and_hierarchy(fw, "01234")
+    hierarchy = get_analysis_run_level_and_hierarchy(fw, "01234")
 
     print(caplog.records)
 
     assert hierarchy["run_level"] == "session"
-    assert len(caplog.records) == 6
-    assert "run_level = session" in caplog.records[0].message
-    assert "monkeyshine" in caplog.records[1].message
-    assert "TheProjectLabel" in caplog.records[2].message
-    assert "subject_label = TheSubjectCode" in caplog.records[3].message
-    assert "session_label = TheSessionLabel" in caplog.records[4].message
-    assert "acquisition_label = unknown acquisition" in caplog.records[5].message
+    assert len(caplog.records) == 1
+    assert "'run_level': 'session'" in caplog.records[0].message
+    assert "monkeyshine" in caplog.records[0].message
+    assert "TheProjectLabel" in caplog.records[0].message
+    assert hierarchy["subject_label"] == "TheSubjectCode"
+    assert hierarchy["session_label"] == "TheSessionLabel"
+    assert hierarchy["acquisition_label"] == None
 
 
 def test_run_level_acquisition_works(caplog):
@@ -146,21 +148,21 @@ def test_run_level_acquisition_works(caplog):
 
     fw = FW("acquisition")
 
-    hierarchy = get_run_level_and_hierarchy(fw, "01234")
+    hierarchy = get_analysis_run_level_and_hierarchy(fw, "01234")
 
     print(caplog.records)
 
     assert hierarchy["run_level"] == "acquisition"
-    assert len(caplog.records) == 6
-    assert "run_level = acquisition" in caplog.records[0].message
-    assert "monkeyshine" in caplog.records[1].message
-    assert "TheProjectLabel" in caplog.records[2].message
-    assert "subject_label = TheSubjectCode" in caplog.records[3].message
-    assert "session_label = TheSessionLabel" in caplog.records[4].message
-    assert "acquisition_label = TheAcquisitionLabel" in caplog.records[5].message
+    assert len(caplog.records) == 1
+    assert "'run_level': 'acquisition'" in caplog.records[0].message
+    assert "monkeyshine" in caplog.records[0].message
+    assert "TheProjectLabel" in caplog.records[0].message
+    assert hierarchy["subject_label"] == "TheSubjectCode"
+    assert hierarchy["session_label"] == "TheSessionLabel"
+    assert hierarchy["acquisition_label"] == "TheAcquisitionLabel"
 
 
-def test_run_level_no_parent_says_so(caplog):
+def test_run_level_no_parent_sysexit(caplog):
     """Running on an acquisition as a destination e.g. (on ss.ce.flywheel.io):
 
     run_level = no_parent,  job.id = 5c92a228c488760025dc699f
@@ -180,26 +182,13 @@ def test_run_level_no_parent_says_so(caplog):
 
     fw = FW("acquisition")
     fw.destination.parent = None
+    fw.destination.container_type = "utility"
 
-    hierarchy = get_run_level_and_hierarchy(fw, "01234")
-    print(f"run_level = {hierarchy['run_level']}")
-    print(f"hierarchy  = {json.dumps(hierarchy, indent=4)}")
+    hierarchy = get_analysis_run_level_and_hierarchy(fw, "01234")
+
     print(caplog.records)
 
-    assert hierarchy["run_level"] == "no_parent"
-
-
-def test_run_level_no_project_says_so(caplog):
-    """A destination that has no parent probably never happens"""
-
-    caplog.set_level(logging.DEBUG)
-
-    fw = FW("acquisition")
-    fw.destination.parent = None
-
-    hierarchy = get_run_level_and_hierarchy(fw, "01234")
-
-    assert hierarchy["run_level"] == "no_parent"
+    assert "destination_id must reference an analysis" in caplog.records[0].message
 
 
 def test_run_level_unknown_project_says_so(caplog):
@@ -210,9 +199,9 @@ def test_run_level_unknown_project_says_so(caplog):
     fw = FW("acquisition")
     fw.destination.parents["project"] = None
 
-    hierarchy = get_run_level_and_hierarchy(fw, "01234")
+    hierarchy = get_analysis_run_level_and_hierarchy(fw, "01234")
 
-    assert "unknown project" in caplog.records[2].message
+    assert "'project_label': None" in caplog.records[0].message
 
 
 def test_run_level_exception_handled(caplog):
@@ -226,8 +215,8 @@ def test_run_level_exception_handled(caplog):
 
         fw = flywheel.Client
 
-        hierarchy = get_run_level_and_hierarchy(fw, "01234")
+        hierarchy = get_analysis_run_level_and_hierarchy(fw, "01234")
 
         print(caplog.records)
 
-        assert "Unable to get level and hierarchy" in caplog.records[0].message
+        assert "does not reference a valid analysis" in caplog.records[0].message
