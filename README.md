@@ -95,28 +95,30 @@ Depending upon your fMRIPrep workflow preferences, a variety of metadata and fil
 
 ```json
 {
-"BIDS": {
-	"Acq": "",
-	"Dir": "",
-	"error_message": "",
-	"Filename": "sub-123_ses-01_fieldmap.nii.gz",
-	"Folder": "fmap",
-	"ignore": false,
-	"IntendedFor": [
-		{"Folder": "func"}
-	],
-	"Modality": "fieldmap",
-	"Path": "sub-123/ses-01/fmap",
-	"Run": "",
-	"template": "fieldmap_file",
-	"valid": true
-},
-"IntendedFor": [
-	"ses-01/func/sub-123_ses-01_task-stroop_run-02_bold.nii.gz",
-	"ses-01/func/sub-123_ses-01_task-stroop_run-01_bold.nii.gz"
-],
-"PhaseEncodingDirection": "j-",
-"TotalReadoutTime": 0.123
+   "BIDS":{
+      "Acq":"",
+      "Dir":"",
+      "error_message":"",
+      "Filename":"sub-123_ses-01_fieldmap.nii.gz",
+      "Folder":"fmap",
+      "ignore":false,
+      "IntendedFor":[
+         {
+            "Folder":"func"
+         }
+      ],
+      "Modality":"fieldmap",
+      "Path":"sub-123/ses-01/fmap",
+      "Run":"",
+      "template":"fieldmap_file",
+      "valid":true
+   },
+   "IntendedFor":[
+      "ses-01/func/sub-123_ses-01_task-stroop_run-02_bold.nii.gz",
+      "ses-01/func/sub-123_ses-01_task-stroop_run-01_bold.nii.gz"
+   ],
+   "PhaseEncodingDirection":"j-",
+   "TotalReadoutTime":0.123
 }
 ```
 
