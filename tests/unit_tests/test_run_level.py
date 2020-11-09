@@ -2,12 +2,9 @@
 
 import json
 import logging
-from os import chdir
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import flywheel
-import pytest
 
 from utils.bids.run_level import get_analysis_run_level_and_hierarchy
 
@@ -68,6 +65,9 @@ class FW:
             ret = Session()
         elif id == "acq_id":
             ret = Acquisition()
+        else:
+            print(f"Unexpected value for {id}?")
+            ret = None
         return ret
 
 
@@ -187,8 +187,10 @@ def test_run_level_no_parent_sysexit(caplog):
     hierarchy = get_analysis_run_level_and_hierarchy(fw, "01234")
 
     print(caplog.records)
+    print(json.dumps(hierarchy, indent=4))
 
     assert "destination_id must reference an analysis" in caplog.records[0].message
+    assert hierarchy["run_level"] == "no_destination"
 
 
 def test_run_level_unknown_project_says_so(caplog):

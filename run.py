@@ -210,8 +210,6 @@ def main(gtk_context):
 
     environ = get_and_log_environment(log)
 
-    if Path(FREESURFER_LICENSE).exists():
-        log.debug("%s exists.", FREESURFER_LICENSE)
     install_freesurfer_license(gtk_context, FREESURFER_LICENSE)
 
     command = generate_command(
