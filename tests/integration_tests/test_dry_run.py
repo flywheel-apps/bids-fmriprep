@@ -54,3 +54,6 @@ def test_dry_run_works(
         assert search_sysout(captured, "Warning: gear-dry-run is set")
         # assert Path("/flywheel/v0/output/.metadata.json").exists()
         assert Path(WORK).exists()
+        assert Path(
+            "/flywheel/v0/output/sub-TOME3024_5ebbfe82bfda51026d6aa079.html.zip"
+        ).exists()

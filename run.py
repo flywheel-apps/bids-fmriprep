@@ -20,6 +20,7 @@ from utils.bids.download_run_level import download_bids_for_runlevel
 from utils.bids.run_level import get_analysis_run_level_and_hierarchy
 from utils.dry_run import pretend_it_ran
 from utils.fly.make_file_name_safe import make_file_name_safe
+from utils.results.zip_htmls import zip_htmls
 from utils.results.zip_intermediate import (
     zip_all_intermediate_output,
     zip_intermediate_selected,
@@ -290,6 +291,9 @@ def main(gtk_context):
             dry_run=False,
             exclude_files=None,
         )
+
+        # Make archives for result *.html files for easy display on platform
+        zip_htmls(gtk_context.output_dir, destination_id, output_analysis_id_dir)
 
         # Remove all fsaverage* directories
         if not config.get("gear-keep-fsaverage"):
