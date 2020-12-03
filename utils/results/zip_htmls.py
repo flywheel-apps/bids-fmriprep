@@ -28,7 +28,7 @@ def zip_it_zip_it_good(output_dir, destination_id, name, output_analysis_id_dir)
     for root, dirs, files in os.walk(output_analysis_id_dir):
         for name in dirs:
             if name == "figures":
-                path = "/".join(os.path.join(root, name).split("/")[5:])
+                path = "/".join(os.path.join(root, name).split("/")[6:])
                 command.append(path)
                 log.info('including "' + path + '"')
 

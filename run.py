@@ -279,6 +279,16 @@ def main(gtk_context):
 
         # Cleanup, move all results to the output directory
 
+        # Remove all fsaverage* directories
+        if not config.get("gear-keep-fsaverage"):
+            path = output_analysis_id_dir / "freesurfer"
+            fsavg_dirs = path.glob("fsaverage*")
+            for fsavg in fsavg_dirs:
+                log.info("deleting %s", str(fsavg))
+                shutil.rmtree(fsavg)
+        else:
+            log.info("Keeping fsaverage directories")
+
         # zip entire output/<analysis_id> folder into
         #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
         zip_file_name = (
@@ -293,17 +303,9 @@ def main(gtk_context):
         )
 
         # Make archives for result *.html files for easy display on platform
-        zip_htmls(gtk_context.output_dir, destination_id, output_analysis_id_dir)
-
-        # Remove all fsaverage* directories
-        if not config.get("gear-keep-fsaverage"):
-            path = output_analysis_id_dir / "freesurfer"
-            fsavg_dirs = path.glob("fsaverage*")
-            for fsavg in fsavg_dirs:
-                log.info("deleting %s", str(fsavg))
-                shutil.rmtree(fsavg)
-        else:
-            log.info("Keeping fsaverage directories")
+        zip_htmls(
+            gtk_context.output_dir, destination_id, output_analysis_id_dir / BIDS_APP
+        )
 
         # possibly save ALL intermediate output
         if config.get("gear-save-intermediate-output"):

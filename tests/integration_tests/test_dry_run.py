@@ -14,6 +14,7 @@ import run
 WORK = (
     "/flywheel/v0/output/bids-fmriprep_work_ses-Session2_5ebbfe82bfda51026d6aa079.zip"
 )
+RESULT = "/flywheel/v0/output/bids-fmriprep_ses-Session2_5ebbfe82bfda51026d6aa079.zip"
 
 
 def test_dry_run_works(
@@ -48,12 +49,26 @@ def test_dry_run_works(
         assert search_sysout(
             captured, "Zipping work/reportlets/somecmd/sub-TOME3024/anat"
         )
-        assert search_sysout(
-            captured, "Looked for anatsub-TOME3024_desc-about_T1w.html"
-        )
         assert search_sysout(captured, "Warning: gear-dry-run is set")
-        # assert Path("/flywheel/v0/output/.metadata.json").exists()
+
+        # Warning occured for missing file expected in intermediate output
+        assert search_stdout_contains(
+            captured, "WARNING", "Looked for anatsub-TOME3024_desc-about_T1w.html"
+        )
+
+        # gear-save-intermediate-output saved work dir
         assert Path(WORK).exists()
+
+        # html report was generated for viewing on platform
         assert Path(
             "/flywheel/v0/output/sub-TOME3024_5ebbfe82bfda51026d6aa079.html.zip"
+        ).exists()
+
+        # Make sure results are as expected
+        unzip_archive(RESULT, "/tmp")
+        assert Path("/tmp/5ebbfe82bfda51026d6aa079/freesurfer").exists()
+        # fsaverage was deleted
+        assert not Path("/tmp/5ebbfe82bfda51026d6aa079/freesurfer/fsaverage").exists()
+        assert Path(
+            "/tmp/5ebbfe82bfda51026d6aa079/freesurfer/sub-TOME3024/stats/aseg.stats"
         ).exists()
