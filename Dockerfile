@@ -1,4 +1,5 @@
 FROM poldracklab/fmriprep:20.2.0
+# as of 2020-12-02, version 20.2.1 is not on dockerhub
 
 LABEL maintainer="support@flywheel.io"
 
