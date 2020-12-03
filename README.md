@@ -46,7 +46,7 @@ to provide the license to this gear.  A license is required for this gear to run
 Most config options are identical to those used in fmriprep, and so documentation can be found here https://fmriprep.readthedocs.io/en/stable/usage.html.
 
 The following additional arguments control how the gear code behaves.
-Note: arguments that start with "gear-" are not passed to the fMRIPrep.
+Note: arguments that start with "gear-" are not passed to fMRIPrep.
 
 ### gear-run-bids-validation (optional)
 Gear argument: Run bids-validator after downloading BIDS formatted data.  Default is false.
