@@ -167,6 +167,9 @@ def generate_command(config, work_dir, output_analysis_id_dir, log, errors, warn
             # enumerated possibilities like v, vv, or vvv
             # e.g. replace "--verbose=vvv' with '-vvv'
             cmd[ii] = "-" + cc.split("=")[1]
+        # elif cc.startswith("--ignore") or cc.startswith("--participant-label"):
+        elif " " in cc:  # then is is a space-separated list so take out "="
+            cmd[ii] = cc.replace("=", " ")
 
     log.info("command is: %s", str(cmd))
     return cmd
