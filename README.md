@@ -29,6 +29,8 @@ To run the gear, select a [project](https://docs.flywheel.io/hc/en-us/articles/3
 
 Instead of running at the project level which will sequentially step through each subject, you can launch multiple bids-fmriprep jobs on subjects or sessions in parallel.  An example of running bids-fmriprep on a subject using the Flywheel SDK is in this [notebook](notebooks/run-bids-fmriprep.ipynb).  More details about running gears using the SDK can be found in this [tutorial](https://gitlab.com/flywheel-io/public/flywheel-tutorials/-/blob/ad392d26131ef22408423b5a5c14104253d53cd6/python/batch-run-gears.ipynb).
 
+Note that bids-fmriprep can take a *long* time to run because it runs Freesurfer.  Depending on the number of structural and functional files, it can run for 12 to 48 or more hours.
+
 ## Inputs
 
 Because the project has been BIDS curated, all of the proper T1, T2, and fMRI files will be automatically found.
