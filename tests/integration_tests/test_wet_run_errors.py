@@ -33,3 +33,7 @@ def test_wet_run_errors(
         assert search_sysout(captured, "sub-TOME3024_ses-Session2_acq-MPR_T1w.nii.gz")
         assert search_sysout(captured, "Not running BIDS validation")
         assert search_syserr(captured, "Unable to execute command")
+        assert search_syserr(captured, "RuntimeError: No BOLD images found")
+        # Make sure "=" was removed when parameter is a space separated list"
+        assert search_syserr(captured, "--ignore fieldmaps slicetiming")
+        assert search_syserr(captured, "--output-spaces MNI152NLin2009cAsym individual")

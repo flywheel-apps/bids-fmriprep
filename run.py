@@ -20,6 +20,7 @@ from utils.bids.download_run_level import download_bids_for_runlevel
 from utils.bids.run_level import get_analysis_run_level_and_hierarchy
 from utils.dry_run import pretend_it_ran
 from utils.fly.make_file_name_safe import make_file_name_safe
+from utils.results.zip_htmls import zip_htmls
 from utils.results.zip_intermediate import (
     zip_all_intermediate_output,
     zip_intermediate_selected,
@@ -166,6 +167,9 @@ def generate_command(config, work_dir, output_analysis_id_dir, log, errors, warn
             # enumerated possibilities like v, vv, or vvv
             # e.g. replace "--verbose=vvv' with '-vvv'
             cmd[ii] = "-" + cc.split("=")[1]
+        # elif cc.startswith("--ignore") or cc.startswith("--participant-label"):
+        elif " " in cc:  # then is is a space-separated list so take out "="
+            cmd[ii] = cc.replace("=", " ")
 
     log.info("command is: %s", str(cmd))
     return cmd
@@ -278,6 +282,16 @@ def main(gtk_context):
 
         # Cleanup, move all results to the output directory
 
+        # Remove all fsaverage* directories
+        if not config.get("gear-keep-fsaverage"):
+            path = output_analysis_id_dir / "freesurfer"
+            fsavg_dirs = path.glob("fsaverage*")
+            for fsavg in fsavg_dirs:
+                log.info("deleting %s", str(fsavg))
+                shutil.rmtree(fsavg)
+        else:
+            log.info("Keeping fsaverage directories")
+
         # zip entire output/<analysis_id> folder into
         #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
         zip_file_name = (
@@ -291,15 +305,10 @@ def main(gtk_context):
             exclude_files=None,
         )
 
-        # Remove all fsaverage* directories
-        if not config.get("gear-keep-fsaverage"):
-            path = output_analysis_id_dir / "freesurfer"
-            fsavg_dirs = path.glob("fsaverage*")
-            for fsavg in fsavg_dirs:
-                log.info("deleting %s", str(fsavg))
-                shutil.rmtree(fsavg)
-        else:
-            log.info("Keeping fsaverage directories")
+        # Make archives for result *.html files for easy display on platform
+        zip_htmls(
+            gtk_context.output_dir, destination_id, output_analysis_id_dir / BIDS_APP
+        )
 
         # possibly save ALL intermediate output
         if config.get("gear-save-intermediate-output"):

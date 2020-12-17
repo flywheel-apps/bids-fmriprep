@@ -1,5 +1,5 @@
 # bids-fmriprep
-[Flywheel Gear](https://github.com/flywheel-io/gears/tree/master/spec) which runs [fMRIPrep](http://fmriprep.readthedocs.io) Long-Term Support version 20.2.0 (September 28, 2020) on BIDS-curated data. fMRIPrep is a functional magnetic resonance imaging (fMRI) data preprocessing pipeline that is designed to provide an easily accessible, state-of-the-art interface that is robust to variations in scan acquisition protocols and that requires minimal user input, while providing easily interpretable and comprehensive error and output reporting. It performs basic processing steps (coregistration, normalization, unwarping, noise component extraction, segmentation, skull stripping, etc.) providing outputs that can be easily submitted to a variety of group level analyses, including task-based or resting-state fMRI, graph theory measures, surface or volume-based statistics, etc.
+[Flywheel Gear](https://github.com/flywheel-io/gears/tree/master/spec) which runs [fMRIPrep](http://fmriprep.readthedocs.io) Long-Term Support version 20.2.1 (November 6, 2020) on BIDS-curated data. fMRIPrep is a functional magnetic resonance imaging (fMRI) data preprocessing pipeline that is designed to provide an easily accessible, state-of-the-art interface that is robust to variations in scan acquisition protocols and that requires minimal user input, while providing easily interpretable and comprehensive error and output reporting. It performs basic processing steps (coregistration, normalization, unwarping, noise component extraction, segmentation, skull stripping, etc.) providing outputs that can be easily submitted to a variety of group level analyses, including task-based or resting-state fMRI, graph theory measures, surface or volume-based statistics, etc.
 
 The version number is (Flywheel gear) MAJOR . MINOR . PATCH _ (algorithm) YY . MINOR . PATCH
 
@@ -29,6 +29,8 @@ To run the gear, select a [project](https://docs.flywheel.io/hc/en-us/articles/3
 
 Instead of running at the project level which will sequentially step through each subject, you can launch multiple bids-fmriprep jobs on subjects or sessions in parallel.  An example of running bids-fmriprep on a subject using the Flywheel SDK is in this [notebook](notebooks/run-bids-fmriprep.ipynb).  More details about running gears using the SDK can be found in this [tutorial](https://gitlab.com/flywheel-io/public/flywheel-tutorials/-/blob/ad392d26131ef22408423b5a5c14104253d53cd6/python/batch-run-gears.ipynb).
 
+Note that bids-fmriprep can take a *long* time to run because it runs Freesurfer.  Depending on the number of structural and functional files, it can run for 12 to 48 or more hours.
+
 ## Inputs
 
 Because the project has been BIDS curated, all of the proper T1, T2, and fMRI files will be automatically found.
@@ -46,7 +48,7 @@ to provide the license to this gear.  A license is required for this gear to run
 Most config options are identical to those used in fmriprep, and so documentation can be found here https://fmriprep.readthedocs.io/en/stable/usage.html.
 
 The following additional arguments control how the gear code behaves.
-Note: arguments that start with "gear-" are not passed to the fMRIPrep.
+Note: arguments that start with "gear-" are not passed to fMRIPrep.
 
 ### gear-run-bids-validation (optional)
 Gear argument: Run bids-validator after downloading BIDS formatted data.  Default is false.
