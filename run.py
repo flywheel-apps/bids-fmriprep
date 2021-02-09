@@ -49,7 +49,8 @@ ENVIRONMENT_FILE = "/tmp/gear_environ.json"
 def set_performance_config(config, log):
     """Set run-time performance config params to pass to BIDS App.
 
-    Set --n_cpus (number of threads) and --mem_mb (maximum memory to use).
+    Set --n_cpus (maximum number of threads across all processes), --omp-nthreads
+    (maximum number of threads per-process) and --mem_mb (maximum memory to use).
     Use the given number unless it is too big.  Use the max available if zero.
 
     The user may want to set these number to less than the maximum if using a
@@ -77,6 +78,18 @@ def set_performance_config(config, log):
         config["n_cpus"] = os_cpu_count  # zoom zoom
         log.info("using n_cpus = %d (maximum available)", os_cpu_count)
 
+    # Do the same for omp-nthreads
+    omp_nthreads = config.get("omp-nthreads")
+    if omp_nthreads:
+        if omp_nthreads > os_cpu_count:
+            log.warning("omp-nthreads > number available, using max %d", os_cpu_count)
+            config["omp-nthreads"] = os_cpu_count
+        else:
+            log.info("omp-nthreads using %d from config", omp_nthreads)
+    else:  # Default is to use all cpus available
+        config["omp-nthreads"] = os_cpu_count  # zoom zoom
+        log.info("using omp-nthreads = %d (maximum available)", os_cpu_count)
+
     psutil_mem_mb = int(psutil.virtual_memory().available / (1024 ** 2))
     log.info("psutil.virtual_memory().available= {:8.2f} MiB".format(psutil_mem_mb))
     mem_mb = config.get("mem_mb")
@@ -91,7 +104,7 @@ def set_performance_config(config, log):
         log.info("using mem_mb = %d (maximum available)", psutil_mem_mb)
 
 
-def get_and_log_environment(log):
+def get_and_log_environment(config, log):
     """Grab and log environment for to use when executing command line.
 
     The shell environment is saved into a file at an appropriate place in the Dockerfile.
@@ -103,6 +116,10 @@ def get_and_log_environment(log):
     """
     with open(ENVIRONMENT_FILE, "r") as f:
         environ = json.load(f)
+        print("config :", json.dumps(config, indent=4))
+        print("environ :", json.dumps(environ, indent=4))
+
+        environ["OMP_NUM_THREADS"] = str(config["omp-nthreads"])
 
         # Add environment to log if debugging
         kv = ""
@@ -212,7 +229,7 @@ def main(gtk_context):
     # set # threads and max memory to use
     set_performance_config(config, log)
 
-    environ = get_and_log_environment(log)
+    environ = get_and_log_environment(config, log)
 
     install_freesurfer_license(gtk_context, FREESURFER_LICENSE)
 
