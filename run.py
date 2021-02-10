@@ -2,6 +2,7 @@
 """Run the gear: set up for and call command-line command."""
 
 import json
+import logging
 import os
 import shutil
 import sys
@@ -13,18 +14,23 @@ from flywheel_gear_toolkit.interfaces.command_line import (
     build_command_list,
     exec_command,
 )
-from flywheel_gear_toolkit.licenses.freesurfer import install_freesurfer_license
 from flywheel_gear_toolkit.utils.zip_tools import zip_output
 
 from utils.bids.download_run_level import download_bids_for_runlevel
 from utils.bids.run_level import get_analysis_run_level_and_hierarchy
 from utils.dry_run import pretend_it_ran
+from utils.fly.environment import get_and_log_environment
 from utils.fly.make_file_name_safe import make_file_name_safe
+from utils.fly.set_performance_config import set_mem_gb, set_n_cpus
+from utils.freesurfer import install_freesurfer_license
 from utils.results.zip_htmls import zip_htmls
 from utils.results.zip_intermediate import (
     zip_all_intermediate_output,
     zip_intermediate_selected,
 )
+from utils.singularity import run_in_tmp_dir
+
+log = logging.getLogger(__name__)
 
 GEAR = "bids-fmriprep"
 REPO = "flywheel-apps"
@@ -42,102 +48,16 @@ DOWNLOAD_MODALITIES = ["anat", "func", "fmap"]  # empty list is no limit
 DOWNLOAD_SOURCE = False
 
 # Constants that do not need to be changed
-FREESURFER_LICENSE = "/opt/freesurfer/license.txt"
-ENVIRONMENT_FILE = "/tmp/gear_environ.json"
+FREESURFER_LICENSE = "./freesurfer/license.txt"
 
 
-def set_performance_config(config, log):
-    """Set run-time performance config params to pass to BIDS App.
-
-    Set --n_cpus (maximum number of threads across all processes), --omp-nthreads
-    (maximum number of threads per-process) and --mem_mb (maximum memory to use).
-    Use the given number unless it is too big.  Use the max available if zero.
-
-    The user may want to set these number to less than the maximum if using a
-    shared compute resource.
-
-    Args:
-        config (GearToolkitContext.config): run-time options from config.json
-        log (GearToolkitContext().log): logger set up by Gear Toolkit
-
-    Results:
-        sets config["n_cpus"] which will become part of the command line command
-        sets config["mem_mb"] which will become part of the command line command
-    """
-
-    os_cpu_count = os.cpu_count()
-    log.info("os.cpu_count() = %d", os_cpu_count)
-    n_cpus = config.get("n_cpus")
-    if n_cpus:
-        if n_cpus > os_cpu_count:
-            log.warning("n_cpus > number available, using max %d", os_cpu_count)
-            config["n_cpus"] = os_cpu_count
-        else:
-            log.info("n_cpus using %d from config", n_cpus)
-    else:  # Default is to use all cpus available
-        config["n_cpus"] = os_cpu_count  # zoom zoom
-        log.info("using n_cpus = %d (maximum available)", os_cpu_count)
-
-    # Do the same for omp-nthreads
-    omp_nthreads = config.get("omp-nthreads")
-    if omp_nthreads:
-        if omp_nthreads > os_cpu_count:
-            log.warning("omp-nthreads > number available, using max %d", os_cpu_count)
-            config["omp-nthreads"] = os_cpu_count
-        else:
-            log.info("omp-nthreads using %d from config", omp_nthreads)
-    else:  # Default is to use all cpus available
-        config["omp-nthreads"] = os_cpu_count  # zoom zoom
-        log.info("using omp-nthreads = %d (maximum available)", os_cpu_count)
-
-    psutil_mem_mb = int(psutil.virtual_memory().available / (1024 ** 2))
-    log.info("psutil.virtual_memory().available= {:8.2f} MiB".format(psutil_mem_mb))
-    mem_mb = config.get("mem_mb")
-    if mem_mb:
-        if mem_mb > psutil_mem_mb:
-            log.warning("mem_mb > number available, using max %d", psutil_mem_mb)
-            config["mem_mb"] = psutil_mem_mb
-        else:
-            log.info("mem_mb using %d from config", n_cpus)
-    else:  # Default is to use all cpus available
-        config["mem_mb"] = psutil_mem_mb
-        log.info("using mem_mb = %d (maximum available)", psutil_mem_mb)
-
-
-def get_and_log_environment(config, log):
-    """Grab and log environment for to use when executing command line.
-
-    The shell environment is saved into a file at an appropriate place in the Dockerfile.
-
-    Args:
-        log (GearToolkitContext().log): logger set up by Gear Toolkit
-
-    Returns: (nothing)
-    """
-    with open(ENVIRONMENT_FILE, "r") as f:
-        environ = json.load(f)
-        print("config :", json.dumps(config, indent=4))
-        print("environ :", json.dumps(environ, indent=4))
-
-        environ["OMP_NUM_THREADS"] = str(config["omp-nthreads"])
-
-        # Add environment to log if debugging
-        kv = ""
-        for k, v in environ.items():
-            kv += k + "=" + v + " "
-        log.debug("Environment: " + kv)
-
-    return environ
-
-
-def generate_command(config, work_dir, output_analysis_id_dir, log, errors, warnings):
+def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings):
     """Build the main command line command to run.
 
     Args:
         config (GearToolkitContext.config): run-time options from config.json
         work_dir (path): scratch directory where non-saved files can be put
         output_analysis_id_dir (path): directory where output will be saved
-        log (GearToolkitContext().log): logger set up by Gear Toolkit
         errors (list of str): error messages
         warnings (list of str): warning messages
 
@@ -184,8 +104,8 @@ def generate_command(config, work_dir, output_analysis_id_dir, log, errors, warn
             # enumerated possibilities like v, vv, or vvv
             # e.g. replace "--verbose=vvv' with '-vvv'
             cmd[ii] = "-" + cc.split("=")[1]
-        # elif cc.startswith("--ignore") or cc.startswith("--participant-label"):
         elif " " in cc:  # then is is a space-separated list so take out "="
+            # this allows argparse "nargs" to work properly
             cmd[ii] = cc.replace("=", " ")
 
     log.info("command is: %s", str(cmd))
@@ -194,23 +114,27 @@ def generate_command(config, work_dir, output_analysis_id_dir, log, errors, warn
 
 def main(gtk_context):
 
+    FWV0 = Path.cwd()
+    log.debug("Running gear in %s", FWV0)
+
+    gtk_context.log_config()
+
+    # Errors and warnings will be always logged when they are detected.
     # Keep a list of errors and warning to print all in one place at end of log
     # Any errors will prevent the command from running and will cause exit(1)
     errors = []
     warnings = []
 
+    output_dir = gtk_context.output_dir
+    log.debug("output_dir is %s", output_dir)
+    work_dir = gtk_context.work_dir
+    log.debug("work_dir is %s", work_dir)
+    gear_name = gtk_context.manifest["name"]
+
     # run-time configuration options from the gear's context.json
     config = gtk_context.config
 
     dry_run = config.get("gear-dry-run")
-
-    # Setup basic logging and log the configuration for this job
-    if config["gear-log-level"] == "INFO":
-        gtk_context.init_logging("info")
-    else:
-        gtk_context.init_logging("debug")
-    gtk_context.log_config()
-    log = gtk_context.log
 
     # Given the destination container, figure out if running at the project,
     # subject, or session level.
@@ -224,17 +148,42 @@ def main(gtk_context):
     # Output will be put into a directory named as the destination id.
     # This allows the raw output to be deleted so that a zipped archive
     # can be returned.
-    output_analysis_id_dir = gtk_context.output_dir / destination_id
+    output_analysis_id_dir = output_dir / destination_id
+
+    environ = get_and_log_environment()
 
     # set # threads and max memory to use
-    set_performance_config(config, log)
+    config["n_cpus"], config["omp-nthreads"] = set_n_cpus(
+        config.get("n_cpus"), config.get("omp-nthreads")
+    )
+    config["mem"] = set_mem_gb(config.get("mem"))
 
-    environ = get_and_log_environment(config, log)
+    environ["OMP_NUM_THREADS"] = str(config["omp-nthreads"])
 
-    install_freesurfer_license(gtk_context, FREESURFER_LICENSE)
+    orig_subject_dir = Path(environ["SUBJECTS_DIR"])
+    subjects_dir = FWV0 / "freesurfer/subjects"
+    environ["SUBJECTS_DIR"] = str(subjects_dir)
+    if not subjects_dir.exists():  # needs to be created unless testing
+        subjects_dir.mkdir(parents=True)
+        (subjects_dir / "fsaverage").symlink_to(orig_subject_dir / "fsaverage")
+        (subjects_dir / "fsaverage5").symlink_to(orig_subject_dir / "fsaverage5")
+        (subjects_dir / "fsaverage6").symlink_to(orig_subject_dir / "fsaverage6")
+
+    license_list = list(Path("input/freesurfer_license").glob("*"))
+    if len(license_list) > 0:
+        fs_license_path = license_list[0]
+    else:
+        fs_license_path = ""
+    install_freesurfer_license(
+        str(fs_license_path),
+        config.get("gear-FREESURFER_LICENSE"),
+        gtk_context.client,
+        destination_id,
+        FREESURFER_LICENSE,
+    )
 
     command = generate_command(
-        config, gtk_context.work_dir, output_analysis_id_dir, log, errors, warnings
+        config, work_dir, output_analysis_id_dir, errors, warnings
     )
 
     # This is used as part of the name of output files
@@ -277,12 +226,16 @@ def main(gtk_context):
             e = "gear-dry-run is set: Command was NOT run."
             log.warning(e)
             warnings.append(e)
-            pretend_it_ran(gtk_context)
+            pretend_it_ran(destination_id)
 
         else:
             # Create output directory
             log.info("Creating output directory %s", output_analysis_id_dir)
             Path(output_analysis_id_dir).mkdir()
+
+            if gtk_context.config["gear-log-level"] != "INFO":
+                # show what's in the current working directory just before running
+                os.system("tree -a .")
 
             # This is what it is all about
             exec_command(
@@ -311,11 +264,9 @@ def main(gtk_context):
 
         # zip entire output/<analysis_id> folder into
         #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
-        zip_file_name = (
-            gtk_context.manifest["name"] + f"_{run_label}_{destination_id}.zip"
-        )
+        zip_file_name = gear_name + f"_{run_label}_{destination_id}.zip"
         zip_output(
-            str(gtk_context.output_dir),
+            str(output_dir),
             destination_id,
             zip_file_name,
             dry_run=False,
@@ -323,16 +274,24 @@ def main(gtk_context):
         )
 
         # Make archives for result *.html files for easy display on platform
-        zip_htmls(
-            gtk_context.output_dir, destination_id, output_analysis_id_dir / BIDS_APP
-        )
+        zip_htmls(output_dir, destination_id, output_analysis_id_dir / BIDS_APP)
 
         # possibly save ALL intermediate output
         if config.get("gear-save-intermediate-output"):
-            zip_all_intermediate_output(gtk_context, run_label)
+            zip_all_intermediate_output(
+                destination_id, gear_name, output_dir, work_dir, run_label
+            )
 
         # possibly save intermediate files and folders
-        zip_intermediate_selected(gtk_context, run_label)
+        zip_intermediate_selected(
+            config.get("gear-intermediate-files"),
+            config.get("gear-intermediate-folders"),
+            destination_id,
+            gear_name,
+            output_dir,
+            work_dir,
+            run_label,
+        )
 
         # clean up: remove output that was zipped
         if Path(output_analysis_id_dir).exists():
@@ -375,4 +334,25 @@ def main(gtk_context):
 
 if __name__ == "__main__":
 
-    sys.exit(main(flywheel_gear_toolkit.GearToolkitContext()))
+    # always run in a newly created "scratch" directory in /tmp/...
+    scratch_dir = run_in_tmp_dir()
+
+    gtk_context = flywheel_gear_toolkit.GearToolkitContext()
+
+    # Setup basic logging and log the configuration for this job
+    if gtk_context.config["gear-log-level"] == "INFO":
+        gtk_context.init_logging("info")
+    else:
+        gtk_context.init_logging("debug")
+
+    return_code = main(gtk_context)
+
+    # clean up (might be necessary when running in a shared computing environment)
+    for thing in scratch_dir.glob("*"):
+        if thing.is_symlink():
+            thing.unlink()  # don't remove anything links point to
+            log.debug("unlinked %s", thing.name)
+    shutil.rmtree(scratch_dir)
+    log.debug("Removed %s", scratch_dir)
+
+    sys.exit(return_code)

@@ -5,14 +5,13 @@ from run import get_and_log_environment
 log = logging.getLogger(__name__)
 
 
-def test_get_and_log_environment_works(capfd, print_captured, search_stdout_contains):
+def test_get_and_log_environment_works(caplog, search_caplog):
 
-    config = {"omp-nthreads": "4"}
+    caplog.set_level(logging.DEBUG)
 
-    environ = get_and_log_environment(config, log)
+    environ = get_and_log_environment()
 
-    captured = capfd.readouterr()
-
-    print_captured(captured)
-
-    assert environ["OMP_NUM_THREADS"] == "4"
+    assert environ["FLYWHEEL"] == "/flywheel/v0"
+    assert environ["FREESURFER_HOME"] == "/opt/freesurfer"
+    assert search_caplog(caplog, "FREESURFER_HOME=/opt/freesurfer")
+    assert search_caplog(caplog, "Grabbing environment from /tmp/gear-temp-dir-")

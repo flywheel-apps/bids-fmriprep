@@ -1,93 +1,63 @@
-import json
 import logging
 
-import flywheel_gear_toolkit
-
-from run import set_performance_config
+from utils.fly.set_performance_config import set_mem_gb, set_n_cpus
 
 
-def test_set_performance_config_0_is_max(capfd, print_captured, search_stdout_contains):
+def test_set_performance_config_0_is_max(caplog, print_caplog, search_caplog_contains):
 
-    with flywheel_gear_toolkit.GearToolkitContext(input_args=[]) as gtk_context:
-        gtk_context.init_logging("info")
-        gtk_context.log_config()
-        log = gtk_context.log
+    caplog.set_level(logging.DEBUG)
 
-        config = {"n_cpus": 0, "mem_mb": 0}
+    n_cpus, omp_nthreads = set_n_cpus(0, 0)
+    mem_gb = set_mem_gb(0)
 
-        set_performance_config(config, log)
+    print_caplog(caplog)
 
-    print("config = ", json.dumps(config, indent=4))
-
-    captured = capfd.readouterr()
-
-    print_captured(captured)
-
-    assert search_stdout_contains(captured, "using n_cpus", "maximum available")
-    assert search_stdout_contains(captured, "using mem_mb", "maximum available")
+    assert search_caplog_contains(caplog, "using n_cpus", "maximum available")
+    assert search_caplog_contains(caplog, "using omp-nthreads", "maximum available")
+    assert search_caplog_contains(caplog, "using mem", "maximum available")
 
 
-def test_set_performance_config_2much_is_2much(capfd, search_sysout, print_captured):
+def test_set_performance_config_2much_is_2much(caplog, print_caplog, search_caplog):
 
-    with flywheel_gear_toolkit.GearToolkitContext(input_args=[]) as gtk_context:
-        gtk_context.init_logging("info")
-        gtk_context.log_config()
-        log = gtk_context.log
+    caplog.set_level(logging.DEBUG)
 
-        config = {"n_cpus": 10001, "mem_mb": 100001}
+    n_cpus, omp_nthreads = set_n_cpus(10001, 10001)
+    mem_gb = set_mem_gb(100001)
 
-        set_performance_config(config, log)
+    print_caplog(caplog)
 
-    print("config = ", json.dumps(config, indent=4))
-
-    captured = capfd.readouterr()
-
-    print_captured(captured)
-
-    assert search_sysout(captured, "n_cpus > number")
-    assert search_sysout(captured, "mem_mb > number")
+    assert search_caplog(caplog, "n_cpus > number")
+    assert search_caplog(caplog, "omp-nthreads > number")
+    assert search_caplog(caplog, "mem > number")
 
 
 def test_set_performance_config_default_is_max(
-    capfd, print_captured, search_stdout_contains
+    caplog, print_caplog, search_caplog_contains
 ):
 
-    with flywheel_gear_toolkit.GearToolkitContext(input_args=[]) as gtk_context:
-        gtk_context.init_logging("info")
-        gtk_context.log_config()
-        log = gtk_context.log
+    caplog.set_level(logging.DEBUG)
 
-        config = {}
+    n_cpus, omp_nthreads = set_n_cpus(None, None)
+    mem_gb = set_mem_gb(None)
 
-        set_performance_config(config, log)
+    print_caplog(caplog)
+    print_caplog(caplog)
 
-    print("config = ", json.dumps(config, indent=4))
-
-    captured = capfd.readouterr()
-
-    print_captured(captured)
-
-    assert search_stdout_contains(captured, "using n_cpus", "maximum available")
-    assert search_stdout_contains(captured, "using mem_mb", "maximum available")
+    assert search_caplog_contains(caplog, "using n_cpus", "maximum available")
+    assert search_caplog_contains(caplog, "using omp-nthreads", "maximum available")
+    assert search_caplog_contains(caplog, "using mem", "maximum available")
 
 
-def test_set_performance_config_1_is_1(capfd, search_sysout, print_captured):
+def test_set_performance_config_1_is_1(caplog, search_caplog, print_caplog):
 
-    with flywheel_gear_toolkit.GearToolkitContext(input_args=[]) as gtk_context:
-        gtk_context.init_logging("info")
-        gtk_context.log_config()
-        log = gtk_context.log
+    caplog.set_level(logging.DEBUG)
 
-        config = {"n_cpus": 1, "mem_mb": 1}
+    n_cpus, omp_nthreads = set_n_cpus(1, 2)
+    mem_gb = set_mem_gb(1)
 
-        set_performance_config(config, log)
+    print_caplog(caplog)
 
-    print("config = ", json.dumps(config, indent=4))
-
-    captured = capfd.readouterr()
-
-    print_captured(captured)
-
-    assert config["n_cpus"] == 1
-    assert config["mem_mb"] == 1
-    assert search_sysout(captured, "from config")
+    assert n_cpus == 1
+    assert omp_nthreads == 2
+    assert mem_gb == 1
+    assert search_caplog(caplog, "from config")

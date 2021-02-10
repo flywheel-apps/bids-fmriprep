@@ -38,7 +38,7 @@ def test_generate_command_missing_config_works(
         errors = []
         warnings = []
 
-        generate_command(config, Path("work"), Path("out/###"), log, errors, warnings)
+        generate_command(config, Path("work"), Path("out/###"), errors, warnings)
 
     captured = capfd.readouterr()
 
