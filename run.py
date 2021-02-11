@@ -160,6 +160,8 @@ def main(gtk_context):
 
     environ["OMP_NUM_THREADS"] = str(config["omp-nthreads"])
 
+    # All writeable directories need to be set up in the current working directory
+
     orig_subject_dir = Path(environ["SUBJECTS_DIR"])
     subjects_dir = FWV0 / "freesurfer/subjects"
     environ["SUBJECTS_DIR"] = str(subjects_dir)
@@ -183,6 +185,11 @@ def main(gtk_context):
         destination_id,
         FREESURFER_LICENSE,
     )
+
+    templateflow_dir = FWV0 / "templateflow"
+    templateflow_dir.mkdir()
+    environ["SINGULARITYENV_TEMPLATEFLOW_HOME"] = str(templateflow_dir)
+    environ["TEMPLATEFLOW_HOME"] = str(templateflow_dir)
 
     command = generate_command(
         config, work_dir, output_analysis_id_dir, errors, warnings
@@ -235,9 +242,12 @@ def main(gtk_context):
             log.info("Creating output directory %s", output_analysis_id_dir)
             Path(output_analysis_id_dir).mkdir()
 
-            if gtk_context.config["gear-log-level"] != "INFO":
+            if config["gear-log-level"] != "INFO":
                 # show what's in the current working directory just before running
                 os.system("tree -a .")
+
+            if "gear-timeout" in config:
+                command = [f"timeout {config['gear-timeout']}"] + command
 
             # This is what it is all about
             exec_command(

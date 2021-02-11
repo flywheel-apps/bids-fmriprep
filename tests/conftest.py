@@ -31,7 +31,7 @@ def install_gear():
         if Path(FWV0 / "config.json").exists():
             Path(FWV0 / "config.json").unlink()
 
-        for dir_name in ["input", "output", "work", "freesurfer"]:
+        for dir_name in ["input", "output", "work", "freesurfer", "templateflow"]:
             path = Path(FWV0 / dir_name)
             if path.exists():
                 print(f"shutil.rmtree({str(path)}")
@@ -68,9 +68,7 @@ def search_stdout_contains():
 
         for msg in captured.out.split("/n"):
             if find_me in msg:
-                print(f"Found '{find_me}' in '{msg}'")
                 if contains_me in msg:
-                    print(f"Found '{contains_me}' in '{msg}'")
                     return True
         return False
 
@@ -138,9 +136,7 @@ def search_caplog_contains():
 
         for msg in caplog.messages:
             if find_me in msg:
-                print(f"Found '{find_me}' in '{msg}'")
                 if contains_me in msg:
-                    print(f"Found '{contains_me}' in '{msg}'")
                     return True
         return False
 
