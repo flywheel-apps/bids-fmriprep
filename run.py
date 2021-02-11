@@ -169,6 +169,8 @@ def main(gtk_context):
         (subjects_dir / "fsaverage5").symlink_to(orig_subject_dir / "fsaverage5")
         (subjects_dir / "fsaverage6").symlink_to(orig_subject_dir / "fsaverage6")
 
+    environ["FS_LICENSE"] = str(FWV0 / "freesurfer/license.txt")
+
     license_list = list(Path("input/freesurfer_license").glob("*"))
     if len(license_list) > 0:
         fs_license_path = license_list[0]

@@ -24,13 +24,6 @@ COPY requirements.txt /tmp
 RUN pip install -r /tmp/requirements.txt && \
     rm -rf /root/.cache/pip
 
-# Create symbolic link for Freesurfer license but delete the target because
-# the gear's "freesurfer" directory will be created when the gear runs
-RUN mkdir -p ${FLYWHEEL}/freesurfer
-RUN touch ${FLYWHEEL}/freesurfer/license.txt
-RUN ln -s ${FLYWHEEL}/freesurfer/license.txt /opt/freesurfer/license.txt
-RUN rm -rf ${FLYWHEEL}/freesurfer
-
 ENV PYTHONUNBUFFERED 1
 
 # Copy executable/manifest to Gear
