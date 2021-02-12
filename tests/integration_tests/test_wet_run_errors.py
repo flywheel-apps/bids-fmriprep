@@ -8,13 +8,7 @@ import run
 
 
 def test_wet_run_errors(
-    caplog,
-    capfd,
-    install_gear,
-    search_caplog,
-    print_captured,
-    search_syserr,
-    search_caplog_contains,
+    caplog, capfd, install_gear, search_caplog, print_captured, search_caplog_contains,
 ):
 
     caplog.set_level(logging.DEBUG)

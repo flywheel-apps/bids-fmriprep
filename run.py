@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Run the gear: set up for and call command-line command."""
 
-import json
 import logging
 import os
 import shutil
@@ -9,7 +8,6 @@ import sys
 from pathlib import Path
 
 import flywheel_gear_toolkit
-import psutil
 from flywheel_gear_toolkit.interfaces.command_line import (
     build_command_list,
     exec_command,

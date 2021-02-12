@@ -30,8 +30,6 @@ def zip_it_zip_it_good(output_dir, destination_id, name, path):
     for root, dirs, files in os.walk(path):
         for name in dirs:
             if name == "figures":
-                # path = "/".join(os.path.join(root, name).split("/")[6:])
-                # command.append(path)
                 figures_path = root.split("/")[-1] + "/figures"
                 command.append(figures_path)
                 log.info(f"including {figures_path}")
@@ -81,7 +79,7 @@ def zip_htmls(output_dir, destination_id, path):
                 zip_it_zip_it_good(output_dir, destination_id, h_file, path)
                 os.rename("index.html", h_file)
 
-            # reestore if necessary
+            # restore if necessary
             if save_name != "":
                 os.rename(save_name, "index.html")
 

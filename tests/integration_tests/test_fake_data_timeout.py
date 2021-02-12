@@ -1,7 +1,5 @@
 import logging
 import pprint
-import subprocess
-import time
 from pathlib import Path
 from unittest import TestCase
 
@@ -14,13 +12,7 @@ FWV0 = Path.cwd()
 
 
 def test_fake_data_killed(
-    caplog,
-    capfd,
-    install_gear,
-    search_caplog,
-    print_captured,
-    search_syserr,
-    search_caplog_contains,
+    caplog, capfd, install_gear, search_caplog, print_captured,
 ):
 
     caplog.set_level(logging.DEBUG)
