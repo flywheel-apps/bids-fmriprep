@@ -11,7 +11,7 @@ FWV0 = Path.cwd()
 log = logging.getLogger(__name__)
 
 
-def zip_it_zip_it_good(output_dir, destination_id, name):
+def zip_it_zip_it_good(output_dir, destination_id, name, path):
     """Compress html file into an appropriately named archive file *.html.zip
     files are automatically shown in another tab in the browser. These are
     saved at the top level of the output folder."""
@@ -22,9 +22,24 @@ def zip_it_zip_it_good(output_dir, destination_id, name):
         output_dir, name_no_html + "_" + destination_id + ".html.zip"
     )
 
-    log.info('Creating viewable archive "' + dest_zip + '"')
+    log.debug('Creating viewable archive "' + dest_zip + '"')
 
-    command = ["zip", "-q", dest_zip, "index.html"]
+    command = ["zip", "-q", "-r", dest_zip, "index.html"]
+
+    # find all directories called 'figures' and add them to the archive
+    for root, dirs, files in os.walk(path):
+        for name in dirs:
+            if name == "figures":
+                # path = "/".join(os.path.join(root, name).split("/")[6:])
+                # command.append(path)
+                figures_path = root.split("/")[-1] + "/figures"
+                command.append(figures_path)
+                log.info(f"including {figures_path}")
+
+    # log command as a string separated by spaces
+    log.debug(f"pwd = %s", Path.cwd())
+    log.debug(" ".join(command))
+
     result = sp.run(command, check=True)
 
 
@@ -39,7 +54,7 @@ def zip_htmls(output_dir, destination_id, path):
 
     if os.path.exists(path):
 
-        log.info("Found path: " + str(path))
+        log.debug("Found path: " + str(path))
 
         os.chdir(path)
 
@@ -52,7 +67,7 @@ def zip_htmls(output_dir, destination_id, path):
             save_name = ""
             if os.path.exists("index.html"):
                 log.info("Found index.html")
-                zip_it_zip_it_good(output_dir, destination_id, "index.html")
+                zip_it_zip_it_good(output_dir, destination_id, "index.html", path)
 
                 now = datetime.datetime.now()
                 save_name = now.strftime("%Y-%m-%d_%H-%M-%S") + "_index.html"
@@ -61,8 +76,9 @@ def zip_htmls(output_dir, destination_id, path):
                 html_files.remove("index.html")  # don't do this one later
 
             for h_file in html_files:
+                log.info("Found %s", h_file)
                 os.rename(h_file, "index.html")
-                zip_it_zip_it_good(output_dir, destination_id, h_file)
+                zip_it_zip_it_good(output_dir, destination_id, h_file, path)
                 os.rename("index.html", h_file)
 
             # reestore if necessary
