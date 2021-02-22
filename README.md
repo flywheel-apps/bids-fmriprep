@@ -14,7 +14,7 @@ The bids-fmriprep Gear can run at the project, subject or session level.  Becaus
 Before running BIDS curation on your data, you must first prepare your data with the following steps:
 1. Run the [SciTran: DICOM MR Classifier](https://github.com/scitran-apps/dicom-mr-classifier) gear on all the acquisitions in your dataset
     * This step extracts the DICOM header info, and store it as Flywheel Metadata.
-1. Run the [DCM2NIIX: dcm2nii DICOM to NIfTI converter](https://github.com/scitran-apps/dcm2niix) gear on all the acquisitions in your dataset
+1. Run the [DCM2NIIX: dcm2nii DICOM to NIfTI converter](https://github.com/flywheel-apps/dcm2niix) gear on all the acquisitions in your dataset
     * This step generates the Nifti files that fMRIPrep needs from the DICOMS.  It also copies all flywheel metadata from the DICOM to the Nifti file (In this case, all the DICOM header information we extracted in step 1)
 1. Run the [curate-bids gear](https://github.com/flywheel-apps/curate-bids) on the project.  More information about BIDS Curation on Flywheel can be found [here](https://docs.flywheel.io/hc/en-us/articles/360008162154-BIDS-Overview) and running the BIDS curation gear is described [here](https://docs.flywheel.io/hc/en-us/articles/360009218434-BIDS-Curation-Gear).  If you need to rename sessions or subjects before curation, you may find the gear helpful: [bids-pre-curate](https://github.com/flywheel-apps/bids-pre-curate).
 
