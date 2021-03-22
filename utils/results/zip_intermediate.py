@@ -96,16 +96,15 @@ def zip_intermediate_selected(
     folders = []
     # get list of intermediate files (if any)
     if gear_intermediate_files:
-        if len(gear_intermediate_files) > 0:
-            files = gear_intermediate_files.split()
-            log.debug(str(files))
-            do_find = True
+        files = gear_intermediate_files.split()
+        log.debug("Looking for these intermediate files to save: ", str(files))
+        do_find = True
 
     # get list of intermediate folders (if any)
     if gear_intermediate_folders:
-        if len(gear_intermediate_folders) > 0:
-            folders = gear_intermediate_folders.split()
-            do_find = True
+        folders = gear_intermediate_folders.split()
+        log.debug("Looking for these intermediate folders to save: ", str(folders))
+        do_find = True
 
     if do_find:
 
