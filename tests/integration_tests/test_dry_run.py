@@ -41,7 +41,8 @@ def test_dry_run_works(
         assert search_caplog(caplog, "Warning: gear-dry-run is set")
 
         # Make sure platform-viewable archive includes figures
-        html_zip_file = FWV0 / "output/sub-TOME3024_5ebbfe82bfda51026d6aa079.html.zip"
+        html_zip_files = list(FWV0.glob("output/sub-TOME3024_*.html.zip"))
+        html_zip_file = html_zip_files[0]
         assert html_zip_file.exists()
         unzip_archive(html_zip_file, tmp_path)
         assert Path(tmp_path / "index.html").exists()
