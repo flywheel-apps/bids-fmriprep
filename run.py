@@ -3,6 +3,7 @@
 
 import logging
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -76,7 +77,9 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
     # These follow the BIDS Apps definition (https://github.com/BIDS-Apps)
 
     # get parameters to pass to the command by skipping gear config parameters
-    # (which start with "gear-").
+    # (which start with "gear-") and singularity commands.
+    skip_pattern = re.compile("gear-|lsf-|singularity-")
+
     command_parameters = {}
     for key, val in config.items():
 
@@ -86,7 +89,7 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
             for baa in bids_app_args:
                 cmd.append(baa)
 
-        elif not key.startswith("gear-"):
+        elif not skip_pattern.match(key):
             command_parameters[key] = val
 
     # Validate the command parameter dictionary - make sure everything is

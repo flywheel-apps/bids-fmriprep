@@ -22,7 +22,7 @@ def test_generate_command_missing_config_works(
             "num-things": 42,
             "threshold": 3.1415926,
             "n_procs": 1,
-            "verbose": "v",
+            "verbose": "vvv",
             "write-graph": False,
             "gear-abort-on-bids-error": False,
             "gear-log-level": "INFO",
@@ -32,18 +32,26 @@ def test_generate_command_missing_config_works(
             "gear-keep-output": False,
             "n_cpus": 11,
             "mgm_gb": 12,
+            "lsf-cpu": "4",
+            "lsf-ram": "rusage[mem=12000]",
+            "singularity-debug": True,
         }
-        config = {}
 
         errors = []
         warnings = []
 
-        generate_command(config, Path("work"), Path("out/###"), errors, warnings)
+        command = generate_command(
+            config, Path("work"), Path("out/###"), errors, warnings
+        )
 
     captured = capfd.readouterr()
 
     print_captured(captured)
 
-    assert search_stdout_contains(captured, "command is:", "out/##")
-
-    # command is: ['./tests/test.sh', '/flywheel/v0/work/bids', '/flywheel/v0/output/5ebbfe82bfda51026d6aa079', 'participant', 'arg1', 'arg2', 'bad_arg', '--num-things=42', '--threshold=3.1415926', '--n_procs=1', '-v', '--n_cpus=11', '--mgm_gb=12']
+    assert "bad_arg" in command
+    assert "-vvv" in command
+    assert "gear-keep-output" not in command
+    assert "lsf-cpu" not in command
+    assert "lsf-ram" not in command
+    assert "singularity-debug" not in command
+    assert search_stdout_contains(captured, "command is:", "out/###")
