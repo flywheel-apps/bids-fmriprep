@@ -3,10 +3,10 @@
 import logging
 import os
 import shutil
-import subprocess as sp
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
+FWV0 = Path.cwd()
 log = logging.getLogger(__name__)
 
 
@@ -31,7 +31,6 @@ def zip_selected(root_dir, dir_name, output_filename, selected_files, selected_d
         selected_dirs (list) dir names or partial paths to dirs
     """
 
-    cwd = Path().cwd()
     os.chdir(root_dir)
 
     if Path(output_filename).exists():
@@ -68,14 +67,27 @@ def zip_selected(root_dir, dir_name, output_filename, selected_files, selected_d
         if sel not in dirs_found:
             log.warning("Looked for %s but could not find it.", sel)
 
-    os.chdir(cwd)  # Get back to where you once belonged
+    os.chdir(FWV0)  # Get back to where you once belonged
 
 
-def zip_intermediate_selected(context, run_label):
+def zip_intermediate_selected(
+    gear_intermediate_files,
+    gear_intermediate_folders,
+    destination_id,
+    gear_name,
+    output_dir,
+    work_dir,
+    run_label,
+):
     """Zip the listed files and folders in work/.
 
     Args:
-        context (gear_toolkit.GearToolkitContext): flywheel gear context
+        gear_intermediate_files (str) space separated list of files
+        gear_intermediate_folders (str) space separated list of folders
+        destination_id (str) ID of analysis container that is the destination of the gear
+        gear_name (str) name of gear from manifest "name"
+        output_dir (str) path to where output will be written
+        work_dir (str) path to temporary directory
         run_label (str) name of run to use in zip file name
     """
 
@@ -83,26 +95,22 @@ def zip_intermediate_selected(context, run_label):
     files = []
     folders = []
     # get list of intermediate files (if any)
-    if context.config.get("gear-intermediate-files", None):
-        if len(context.config["gear-intermediate-files"]) > 0:
-            files = context.config["gear-intermediate-files"].split()
-            log.debug(str(files))
-            do_find = True
+    if gear_intermediate_files:
+        files = gear_intermediate_files.split()
+        log.debug("Looking for these intermediate files to save: %s", str(files))
+        do_find = True
 
     # get list of intermediate folders (if any)
-    if context.config.get("gear-intermediate-folders", None):
-        if len(context.config["gear-intermediate-folders"]) > 0:
-            folders = context.config["gear-intermediate-folders"].split()
-            do_find = True
+    if gear_intermediate_folders:
+        folders = gear_intermediate_folders.split()
+        log.debug("Looking for these intermediate folders to save: %s", str(folders))
+        do_find = True
 
     if do_find:
 
         # Name of zip file has <subject> and <analysis>
-        analysis_id = context.destination["id"]
-        gear_name = context.manifest["name"]
-        file_name = f"{gear_name}_work_selected_{run_label}_{analysis_id}.zip"
-        dest_zip = os.path.join(context.output_dir, file_name)
-        work_dir = Path(context.work_dir)
+        file_name = f"{gear_name}_work_selected_{run_label}_{destination_id}.zip"
+        dest_zip = os.path.join(output_dir, file_name)
 
         log.info('Files and folders will be zipped to "' + dest_zip + '"')
         zip_selected(work_dir.parents[0], work_dir.name, dest_zip, files, folders)
@@ -111,23 +119,28 @@ def zip_intermediate_selected(context, run_label):
         log.debug("No files or folders specified in config to zip")
 
 
-def zip_all_intermediate_output(context, run_label):
+def zip_all_intermediate_output(
+    destination_id, gear_name, output_dir, work_dir, run_label
+):
     """Zip all intermediate output in the "work/ directory into one archive.
 
     Args:
-        context (gear_toolkit.GearToolkitContext): flywheel gear context
+        destination_id (str) ID of analysis container that is the destination of the gear
+        gear_name (str) name of gear from manifest "name"
+        output_dir (str) path to where output will be written
+        work_dir (str) path to temporary directory
         run_label (str) name of run to use in zip file name
     """
 
     # Name of zip file has <subject> and <analysis>
-    analysis_id = context.destination["id"]
-    gear_name = context.manifest["name"]
-    file_name = f"{gear_name}_work_{run_label}_{analysis_id}"
-    dest_zip = os.path.join(context.output_dir, file_name)
+    file_name = f"{gear_name}_work_{run_label}_{destination_id}"
+    dest_zip = os.path.join(output_dir, file_name)
 
-    work_path, work_dir = os.path.split(context.work_dir)
+    work_path, work_dir = os.path.split(work_dir)
     os.chdir(work_path)
 
     log.info("Zipping " + work_dir + " directory to " + dest_zip + ".")
 
     shutil.make_archive(dest_zip, "zip", work_path, work_dir)
+
+    os.chdir(FWV0)

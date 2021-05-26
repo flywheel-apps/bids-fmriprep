@@ -4,6 +4,7 @@ import copy
 import json
 import logging
 from pathlib import Path
+from unittest import TestCase
 from unittest.mock import patch
 
 import flywheel
@@ -14,6 +15,7 @@ from utils.bids.download_run_level import (
     download_bids_for_runlevel,
     fix_dataset_description,
 )
+from utils.bids.run_level import get_analysis_run_level_and_hierarchy
 
 DATASET_DESCRIPTION = {
     "Acknowledgements": "",
@@ -173,52 +175,7 @@ def test_download_bids_for_runlevel_no_destination_complains(tmp_path, caplog):
     assert "Destination does not exist" in caplog.records[0].message
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
-
-
-def test_download_bids_for_runlevel_project_works(tmp_path, caplog):
-
-    caplog.set_level(logging.DEBUG)
-
-    HIERARCHY["run_level"] = "project"
-
-    # create expected file
-    bids_path = Path(tmp_path) / "work/bids"
-    bids_path.mkdir(parents=True)
-    with open(bids_path / "dataset_description.json", "w") as jfp:
-        json.dump(DATASET_DESCRIPTION, jfp)
-
-    with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
-    ):
-
-        with patch(
-            "flywheel_gear_toolkit.GearToolkitContext.download_project_bids",
-            return_value=bids_path,
-        ):
-
-            with patch(
-                "utils.bids.download_run_level.validate_bids", return_value=0,
-            ):
-
-                gtk_context = flywheel_gear_toolkit.GearToolkitContext(
-                    input_args=["-d aex:analysis"], gear_path=tmp_path
-                )
-
-                err_code = download_bids_for_runlevel(
-                    gtk_context,
-                    HIERARCHY,
-                    tree=True,
-                    tree_title=None,
-                    src_data=True,
-                    folders=[],
-                    dry_run=True,
-                )
-
-    assert len(caplog.records) == 10
-    assert 'project "TheProjectLabel"' in caplog.records[3].message
-    assert 'Getting "tree" listing' in caplog.records[8].message
-
-    HIERARCHY["run_level"] = "acquisition"  # fix what was broke
+    HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
 def test_download_bids_for_runlevel_bad_destination_noted(tmp_path, caplog):
@@ -226,6 +183,7 @@ def test_download_bids_for_runlevel_bad_destination_noted(tmp_path, caplog):
     caplog.set_level(logging.DEBUG)
 
     HIERARCHY["run_level"] = "subject"
+    HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
     # create expected file
     bids_path = Path(tmp_path) / "work/bids"
@@ -265,6 +223,7 @@ def test_download_bids_for_runlevel_bad_destination_noted(tmp_path, caplog):
     assert 'subject "TheSubjectCode"' in caplog.records[4].message
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
+    HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
 def test_download_bids_for_runlevel_unknown_acquisition_detected(tmp_path, caplog):
@@ -316,6 +275,7 @@ def test_download_bids_for_runlevel_session_works(tmp_path, caplog):
     caplog.set_level(logging.DEBUG)
 
     HIERARCHY["run_level"] = "session"
+    HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
     # create expected file
     bids_path = Path(tmp_path) / "work/bids"
@@ -354,6 +314,7 @@ def test_download_bids_for_runlevel_session_works(tmp_path, caplog):
     assert 'session "TheSessionLabel"' in caplog.records[3].message
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
+    HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
 def test_download_bids_for_runlevel_acquisition_exception_detected(tmp_path, caplog):
@@ -429,6 +390,7 @@ def test_download_bids_for_runlevel_unknown_detected(tmp_path, caplog):
     assert "run_level = who knows" in caplog.records[3].message
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
+    HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
 def test_download_bids_for_runlevel_bidsexporterror_exception_detected(
@@ -512,6 +474,7 @@ def test_download_bids_for_runlevel_validate_exception_detected(tmp_path, caplog
     assert "('except', 'what')" in caplog.records[7].message
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
+    HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
 def test_download_bids_for_runlevel_nothing_downloaded_detected(tmp_path, caplog):
@@ -547,3 +510,9 @@ def test_download_bids_for_runlevel_nothing_downloaded_detected(tmp_path, caplog
     assert "No BIDS data was found" in caplog.records[4].message
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
+    HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
+
+
+if __name__ == "__main__":
+
+    test_download_bids_for_runlevel_project_works("/tmp", None)

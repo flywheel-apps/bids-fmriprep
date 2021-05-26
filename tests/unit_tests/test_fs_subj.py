@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-FS_DIR = Path("/usr/local/freesurfer/")
+FS_DIR = Path("freesurfer/")
 SUBJECTS_DIR = Path(FS_DIR / "subjects")
 
 

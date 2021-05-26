@@ -1,13 +1,14 @@
-import json
-import os
 import shutil
 from pathlib import Path
 
 import pytest
 from flywheel_gear_toolkit.utils.zip_tools import unzip_archive
 
-FS_DIR = Path("/usr/local/freesurfer/")
-SUBJECTS_DIR = Path(FS_DIR / "subjects")
+from utils.singularity import run_in_tmp_dir
+
+run_in_tmp_dir()  # run all tests in /tmp/*/flywheel/v0 where * is random
+
+FWV0 = Path.cwd()
 
 
 @pytest.fixture
@@ -15,47 +16,32 @@ def install_gear():
     def _method(zip_name):
         """unarchive initial gear to simulate running inside a real gear.
 
-        This will delete and then install: config.json input/ output/ work/
+        This will delete and then install: config.json input/ output/ work/ freesurfer/
 
         Args:
             zip_name (str): name of zip file that holds simulated gear.
         """
 
-        gear_tests = "/src/tests/data/gear_tests/"
-        gear = "/flywheel/v0/"
-        os.chdir(gear)  # Make sure we're in the right place (gear works in "work/" dir)
+        gear_tests = Path("/src/tests/data/gear_tests/")
+        if not gear_tests.exists():  # fix for running in circleci
+            gear_tests = FWV0 / "tests/data/gear_tests/"
 
         print("\nRemoving previous gear...")
 
-        if Path(gear + "config.json").exists():
-            Path(gear + "config.json").unlink()
+        if Path(FWV0 / "config.json").exists():
+            Path(FWV0 / "config.json").unlink()
 
-        for dir_name in ["input", "output", "work", "freesurfer"]:
-            path = Path(gear + dir_name)
+        for dir_name in ["input", "output", "work", "freesurfer", "templateflow"]:
+            path = Path(FWV0 / dir_name)
             if path.exists():
+                print(f"shutil.rmtree({str(path)}")
                 shutil.rmtree(path)
 
         print(f'\ninstalling new gear, "{zip_name}"...')
-        unzip_archive(gear_tests + zip_name, gear)
+        unzip_archive(gear_tests / zip_name, str(FWV0))
 
-        # move freesurfer license and subject directories to proper place
-        gear_freesurfer = Path("freesurfer")
-        if gear_freesurfer.exists():
-            if not SUBJECTS_DIR.exists():
-                print(f"WARNING: had to create {SUBJECTS_DIR}")
-                SUBJECTS_DIR.mkdir(parents=True)
-            gear_license = Path(gear_freesurfer / "license.txt")
-            if gear_license.exists():
-                if Path(FS_DIR / "license.txt").exists():
-                    Path(FS_DIR / "license.txt").unlink()
-                shutil.move(str(gear_license), str(FS_DIR))
-            subjects = gear_freesurfer.glob("subjects/*")
-            for subj in subjects:
-                subj_name = subj.name
-                if (SUBJECTS_DIR / subj_name).exists():
-                    shutil.rmtree(SUBJECTS_DIR / subj_name)
-                print(f"moving subject to {str(SUBJECTS_DIR / subj_name)}")
-                shutil.move(str(subj), str(SUBJECTS_DIR))
+        # The "freesurfer" direcory needs to have the standard freesurfer
+        # "subjects" directory and "license.txt" file.
 
     return _method
 
@@ -82,9 +68,7 @@ def search_stdout_contains():
 
         for msg in captured.out.split("/n"):
             if find_me in msg:
-                print(f"Found '{find_me}' in '{msg}'")
                 if contains_me in msg:
-                    print(f"Found '{contains_me}' in '{msg}'")
                     return True
         return False
 
@@ -152,9 +136,7 @@ def search_caplog_contains():
 
         for msg in caplog.messages:
             if find_me in msg:
-                print(f"Found '{find_me}' in '{msg}'")
                 if contains_me in msg:
-                    print(f"Found '{contains_me}' in '{msg}'")
                     return True
         return False
 

@@ -2,7 +2,6 @@
 """Determine level at which the gear is running."""
 
 import logging
-import os
 
 from flywheel import ApiException
 

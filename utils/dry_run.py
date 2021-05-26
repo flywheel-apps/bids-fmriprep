@@ -7,10 +7,29 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 
-def pretend_it_ran(context):
-    """Make some output like the command would have done only fake."""
+def make_dirs_and_files(files):
+    """Create directories and touch files.
 
-    # Work diredtory
+    Args:
+        files (list of str) paths to files to be created
+    """
+    for ff in files:
+        if os.path.exists(ff):
+            log.debug("Exists: " + ff)
+        else:
+            log.debug("Creating: " + ff)
+            dir_name = os.path.dirname(ff)
+            os.makedirs(dir_name)
+            Path(ff).touch(mode=0o777, exist_ok=True)
+
+
+def pretend_it_ran(destination_id):
+    """Make some output like the command would have done only fake.
+
+    Args:
+        destination_id (str) ID of destination container
+    """
+
     path = "work/"
 
     log.info("Creating fake output in " + path)
@@ -22,17 +41,10 @@ def pretend_it_ran(context):
         + "sub-TOME3024_desc-about_T1w.html",
     ]
 
-    for ff in files:
-        if os.path.exists(ff):
-            log.debug("Exists: " + ff)
-        else:
-            log.debug("Creating: " + ff)
-            dir_name = os.path.dirname(ff)
-            os.makedirs(dir_name)
-            Path(ff).touch(mode=0o777, exist_ok=True)
+    make_dirs_and_files(files)
 
-    # Output diredtory
-    path = "output/" + context.destination["id"] + "/"
+    # Output directory
+    path = "output/" + destination_id + "/"
 
     log.info("Creating fake output in " + path)
 
@@ -44,14 +56,7 @@ def pretend_it_ran(context):
         path + "freesurfer/fsaverage/mri/subcort.prob.log",
     ]
 
-    for ff in files:
-        if os.path.exists(ff):
-            log.debug("Exists: " + ff)
-        else:
-            log.debug("Creating: " + ff)
-            dir_name = os.path.dirname(ff)
-            os.makedirs(dir_name)
-            Path(ff).touch(mode=0o777, exist_ok=True)
+    make_dirs_and_files(files)
 
     html = """<html>
     <head>

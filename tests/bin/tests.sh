@@ -1,9 +1,7 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 set -eu
 unset CDPATH
-cd "$( dirname "$0" )/../.."
-
 
 USAGE="
 Usage:
@@ -43,17 +41,39 @@ main() {
         shift
     done
 
-    log "INFO: Cleaning pyc and previous coverage results ..."
-    find . -type d -name __pycache__ -exec rm -rf {} \; || true
-    find . -type f -name '*.pyc' -delete
-    rm -rf .coverage htmlcov
+    WD="$( dirname "$0" )/../.."
+    echo "WD is $WD"
+    cd $WD
 
-    python -m pytest tests/unit_tests tests/integration_tests --exitfirst --cov=run --cov-report= "$@"
+    # if running in Singularity, do all work in a temp directory
+    if [[ -v SINGULARITY_NAME ]]; then
+        echo "SINGULARITY_NAME is $SINGULARITY_NAME"
+    elif [[ $(grep docker /proc/self/cgroup) ]]; then
+        echo "Running in Docker"
+    else
+        echo "NOT running in Docker or Singularity"
+    fi
+    echo "Working directory is $WD"
 
-    log "INFO: Reporting coverage ..."
-    local COVERAGE_ARGS="--skip-covered"
-    coverage report --show-missing $COVERAGE_ARGS
-    coverage html $COVERAGE_ARGS
+    if [ ! -w "." ]; then
+        log "INFO: NOT Cleaning pyc and previous coverage results (not writeable)"
+    	COV=""
+    else
+        log "INFO: Cleaning pyc and previous coverage results ..."
+        find . -type d -name __pycache__ -exec rm -rf {} \; || true
+        find . -type f -name '*.pyc' -delete
+        rm -rf .coverage htmlcov
+    	COV="--cov=run --cov-report="
+    fi
+
+    python -m pytest tests/unit_tests tests/integration_tests --exitfirst $COV  "$@"
+
+    if [ -w "." ]; then
+        log "INFO: Reporting coverage ..."
+        local COVERAGE_ARGS="--skip-covered"
+        coverage report --show-missing $COVERAGE_ARGS
+        coverage html $COVERAGE_ARGS
+    fi
 }
 
 log() {
