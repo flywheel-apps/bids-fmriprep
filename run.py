@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 GEAR = "bids-fmriprep"
 REPO = "flywheel-apps"
-CONTAINER = f"{REPO}/{GEAR}]"
+CONTAINER = f"{REPO}/{GEAR}"
 
 BIDS_APP = "fmriprep"
 
