@@ -1,9 +1,13 @@
-FROM nipreps/fmriprep:20.2.1
+FROM nipreps/fmriprep:20.2.3
 
 LABEL maintainer="support@flywheel.io"
 
 ENV FLYWHEEL /flywheel/v0
 WORKDIR ${FLYWHEEL}
+
+# Remove expired LetsEncrypt cert
+RUN rm /usr/share/ca-certificates/mozilla/DST_Root_CA_X3.crt && \
+    update-ca-certificates
 
 # Save docker environ here to keep it separate from the Flywheel gear environment
 RUN python -c 'import os, json; f = open("/flywheel/v0/gear_environ.json", "w"); json.dump(dict(os.environ), f)'
