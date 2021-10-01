@@ -309,7 +309,7 @@
     },
     "gear-builder": {
       "category": "analysis",
-      "image": "flywheel/bids-fmriprep:1.1.20_20.2.1"
+      "image": "flywheel/bids-fmriprep:1.1.20_20.2.3"
     },
     "license": {
       "dependencies": [
