@@ -354,9 +354,7 @@ if __name__ == "__main__":
     # always run in a newly created "scratch" directory in /tmp/...
     scratch_dir = run_in_tmp_dir()
 
-    with flywheel_gear_toolkit.GearToolkitContext(
-        config_path="bids-fmriprep-1.1.20b_20.2.4-61576849c3126070cdeac91b/config.json"
-    ) as gtk_context:
+    with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
         return_code = main(gtk_context)
 
     # clean up (might be necessary when running in a shared computing environment)
