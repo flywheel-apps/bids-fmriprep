@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 GEAR = "bids-fmriprep"
 REPO = "flywheel-apps"
-CONTAINER = f"{REPO}/{GEAR}]"
+CONTAINER = Path(REPO).joinpath(GEAR)
 
 BIDS_APP = "fmriprep"
 
@@ -252,7 +252,11 @@ def main(gtk_context):
 
             # This is what it is all about
             exec_command(
-                command, environ=environ, dry_run=dry_run, shell=True, cont_output=True,
+                command,
+                environ=environ,
+                dry_run=dry_run,
+                shell=True,
+                cont_output=True,
             )
 
     except RuntimeError as exc:
@@ -350,15 +354,8 @@ if __name__ == "__main__":
     # always run in a newly created "scratch" directory in /tmp/...
     scratch_dir = run_in_tmp_dir()
 
-    gtk_context = flywheel_gear_toolkit.GearToolkitContext()
-
-    # Setup basic logging and log the configuration for this job
-    if gtk_context.config["gear-log-level"] == "INFO":
-        gtk_context.init_logging("info")
-    else:
-        gtk_context.init_logging("debug")
-
-    return_code = main(gtk_context)
+    with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
+        return_code = main(gtk_context)
 
     # clean up (might be necessary when running in a shared computing environment)
     for thing in scratch_dir.glob("*"):
