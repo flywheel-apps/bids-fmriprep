@@ -21,7 +21,7 @@ RUN apt-get update && \
     tree && \
     rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g bids-validator@1.5.7
+RUN npm install -g bids-validator@1.8.4
 
 # Python 3.7.1 (default, Dec 14 2018, 19:28:38)
 # [GCC 7.3.0] :: Anaconda, Inc. on linux
