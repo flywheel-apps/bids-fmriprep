@@ -67,7 +67,7 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
     # start with the command itself:
     cmd = [
         BIDS_APP,
-        str(work_dir / "bids"),
+        os.path.join(work_dir, "bids"),
         str(output_analysis_id_dir),
         ANALYSIS_LEVEL,
     ]
@@ -193,7 +193,7 @@ def main(gtk_context):
     environ["TEMPLATEFLOW_HOME"] = str(templateflow_dir)
 
     command = generate_command(
-        config, str(work_dir), output_analysis_id_dir, errors, warnings
+        config, work_dir, output_analysis_id_dir, errors, warnings
     )
 
     # This is used as part of the name of output files
