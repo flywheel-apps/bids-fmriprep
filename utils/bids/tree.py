@@ -90,7 +90,7 @@ def tree_bids(directory, base_name, title=None, extra=None):
         if extra:
             html_file.write(f"\n{extra}\n")
 
-        html2 = "</pre>\n" + "    </blockquote>\n" + "  </body>\n" + "</html>\n"
+        html2 = "</pre>\n" + "  </body>\n" + "</html>\n"
         html_file.write(html2)
 
     log.info('Wrote "%s.html"', base_name)
