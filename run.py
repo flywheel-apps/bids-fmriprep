@@ -193,7 +193,7 @@ def main(gtk_context):
     environ["TEMPLATEFLOW_HOME"] = str(templateflow_dir)
 
     command = generate_command(
-        config, work_dir, output_analysis_id_dir, errors, warnings
+        config, str(work_dir), output_analysis_id_dir, errors, warnings
     )
 
     # This is used as part of the name of output files
