@@ -1,4 +1,4 @@
-# 1.2.22_20.2.4
+# 1.2.0_20.2.4
 - Upgrade BIDS-validator to 1.8.4
 # 1.1.20_20.2.4
 ## Enhancements
