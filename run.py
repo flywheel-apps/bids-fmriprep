@@ -157,7 +157,7 @@ def main(gtk_context):
     config["n_cpus"], config["omp-nthreads"] = set_n_cpus(
         config.get("n_cpus"), config.get("omp-nthreads")
     )
-    config["mem"] = set_mem_gb(config.get("mem"))
+    config["mem"] = set_mem_gb(config.get("mem_mb"))
 
     environ["OMP_NUM_THREADS"] = str(config["omp-nthreads"])
 
