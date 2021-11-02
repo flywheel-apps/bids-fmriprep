@@ -1,4 +1,6 @@
-1.1.20_20.2.4
+# 1.2.0_20.2.4
+- Upgrade BIDS-validator to 1.8.4
+# 1.1.20_20.2.4
 ## Enhancements
 - Add docs folder; release_notes.md
 - Upgrade to `fmriprep` 20.2.4

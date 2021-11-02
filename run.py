@@ -67,7 +67,7 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
     # start with the command itself:
     cmd = [
         BIDS_APP,
-        str(work_dir / "bids"),
+        os.path.join(work_dir, "bids"),
         str(output_analysis_id_dir),
         ANALYSIS_LEVEL,
     ]

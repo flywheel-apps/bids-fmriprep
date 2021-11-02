@@ -14,14 +14,16 @@ ENV REQUESTS_CA_BUNDLE "/etc/ssl/certs/ca-certificates.crt"
 RUN python -c 'import os, json; f = open("/flywheel/v0/gear_environ.json", "w"); json.dump(dict(os.environ), f)'
 
 RUN apt-get update && \
-    curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
+    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
     apt-get install -y \
     zip \
     nodejs \
     tree && \
     rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g bids-validator@1.5.7
+RUN npm install -g bids-validator@1.8.4 \
+    esbuild@0.13.4 \
+    esbuild-runner@2.2.1
 
 # Python 3.7.1 (default, Dec 14 2018, 19:28:38)
 # [GCC 7.3.0] :: Anaconda, Inc. on linux
