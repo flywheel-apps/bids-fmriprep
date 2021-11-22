@@ -40,7 +40,7 @@ def install_gear():
         print(f'\ninstalling new gear, "{zip_name}"...')
         unzip_archive(gear_tests / zip_name, str(FWV0))
 
-        # The "freesurfer" direcory needs to have the standard freesurfer
+        # The "freesurfer" directory needs to have the standard freesurfer
         # "subjects" directory and "license.txt" file.
 
     return _method

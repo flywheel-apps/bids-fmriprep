@@ -44,6 +44,9 @@ Your FreeSurfer license file. [Obtaining a license is free](https://surfer.nmr.m
 This file will be copied into the $FSHOME directory.  There are [three ways](https://docs.flywheel.io/hc/en-us/articles/360013235453-How-to-include-a-Freesurfer-license-file-in-order-to-run-the-fMRIPrep-gear-)
 to provide the license to this gear.  A license is required for this gear to run.
 
+## fs-subjects-dir
+Zip file of existing FreeSurfer subject's directory to reuse.  If the output of FreeSurfer recon-all is provided to fMRIPrep, that output will be used rather than re-running recon-all.  Unzipping the file should produce a particular subject's directory which will be placed in the $FREESURFER_HOME/subjects directory.  The name of the directory must match the -subjid as passed to recon-all.  This version of fMRIPrep uses Freesurfer v6.0.1.
+
 ## Config:
 Most config options are identical to those used in fmriprep, and so documentation can be found here https://fmriprep.readthedocs.io/en/stable/usage.html.
 
