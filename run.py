@@ -13,7 +13,7 @@ from flywheel_gear_toolkit.interfaces.command_line import (
     build_command_list,
     exec_command,
 )
-from flywheel_gear_toolkit.utils.zip_tools import zip_output
+from flywheel_gear_toolkit.utils.zip_tools import unzip_archive, zip_output
 
 from utils.bids.download_run_level import download_bids_for_runlevel
 from utils.bids.run_level import get_analysis_run_level_and_hierarchy
@@ -172,6 +172,15 @@ def main(gtk_context):
         (subjects_dir / "fsaverage5").symlink_to(orig_subject_dir / "fsaverage5")
         (subjects_dir / "fsaverage6").symlink_to(orig_subject_dir / "fsaverage6")
 
+    subject_zip_file_path = gtk_context.get_input_path("fs-subjects-dir")
+    if subject_zip_file_path:
+        paths = list(Path("input/fs-subjects-dir").glob("*"))
+        log.info("Using provided Freesurfer subject file %s", str(paths[0]))
+        unzip_archive(paths[0], subjects_dir)
+
+        # Add --fs-subjects-dir argument to the command
+        config["fs-subjects-dir"] = subjects_dir
+
     environ["FS_LICENSE"] = str(FWV0 / "freesurfer/license.txt")
 
     license_list = list(Path("input/freesurfer_license").glob("*"))
@@ -252,11 +261,7 @@ def main(gtk_context):
 
             # This is what it is all about
             exec_command(
-                command,
-                environ=environ,
-                dry_run=dry_run,
-                shell=True,
-                cont_output=True,
+                command, environ=environ, dry_run=dry_run, shell=True, cont_output=True,
             )
 
     except RuntimeError as exc:

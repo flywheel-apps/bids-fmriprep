@@ -43,12 +43,9 @@ def run_in_tmp_dir():
     else:
         log.debug("Running in %s", running_in)
 
-    # remove any previous runs (possibly left over from previous testing)
-    previous_runs = list(Path("/tmp").glob(f"{SCRATCH_NAME}*"))
-    log.debug("previous_runs = %s", previous_runs)
-    for prev in previous_runs:
-        log.debug("rm %s", prev)
-        shutil.rmtree(prev)
+    # This used to remove any previous runs (possibly left over from previous testing) but that would be bad
+    # if other bids-fmripreps are running on shared hardware at the same time because their directories would
+    # be deleted mid-run.  A very confusing error to debug!
 
     # Create temporary place to run gear
     WD = tempfile.mkdtemp(prefix=SCRATCH_NAME, dir="/tmp")

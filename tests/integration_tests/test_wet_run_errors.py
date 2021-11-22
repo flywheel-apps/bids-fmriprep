@@ -17,6 +17,9 @@ def test_wet_run_errors(
     if not user_json.exists():
         TestCase.skipTest("", f"No API key available in {str(user_json)}")
 
+    # This fake gear must have a destination that has an analysis on a session that has
+    # no bold scans (like BIDS_multi_session/ses-Session2).  It downloads the BIDS data
+    # for that session and the lack of a bold scan will cause the expected error.
     install_gear("wet_run.zip")
 
     with flywheel_gear_toolkit.GearToolkitContext(input_args=[]) as gtk_context:
