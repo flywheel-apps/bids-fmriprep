@@ -1,5 +1,5 @@
 # bids-fmriprep
-[Flywheel Gear](https://github.com/flywheel-io/gears/tree/master/spec) which runs [fMRIPrep](http://fmriprep.readthedocs.io) Long-Term Support version 20.2.4 (October 4, 2021) on BIDS-curated data. fMRIPrep is a functional magnetic resonance imaging (fMRI) data preprocessing pipeline that is designed to provide an easily accessible, state-of-the-art interface that is robust to variations in scan acquisition protocols and that requires minimal user input, while providing easily interpretable and comprehensive error and output reporting. It performs basic processing steps (coregistration, normalization, unwarping, noise component extraction, segmentation, skull stripping, etc.) providing outputs that can be easily submitted to a variety of group level analyses, including task-based or resting-state fMRI, graph theory measures, surface or volume-based statistics, etc.
+[Flywheel Gear](https://github.com/flywheel-io/gears/tree/master/spec) which runs [fMRIPrep](http://fmriprep.readthedocs.io) Long-Term Support version 20.2.6 (November 12, 2021) on BIDS-curated data. fMRIPrep is a functional magnetic resonance imaging (fMRI) data preprocessing pipeline that is designed to provide an easily accessible, state-of-the-art interface that is robust to variations in scan acquisition protocols and that requires minimal user input, while providing easily interpretable and comprehensive error and output reporting. It performs basic processing steps (coregistration, normalization, unwarping, noise component extraction, segmentation, skull stripping, etc.) providing outputs that can be easily submitted to a variety of group level analyses, including task-based or resting-state fMRI, graph theory measures, surface or volume-based statistics, etc.
 
 The version number is (Flywheel gear) MAJOR . MINOR . PATCH _ (algorithm) YY . MINOR . PATCH
 
@@ -8,7 +8,7 @@ This gear can only be run on datasets that have been BIDS curated and can pass t
 
 This Gear requires a (free) Freesurfer license. The license can be provided to the Gear in 3 ways. See [How to include a Freesurfer license file](https://docs.flywheel.io/hc/en-us/articles/360013235453).
 
-The bids-fmriprep Gear can run at the project, subject or session level.  Because files are in the BIDS format, all of the proper files will be used for the given session, subject, or separately, by subject, for the whole project.
+The bids-fmriprep Gear can run at the project, subject or session level.  Because files are in the BIDS format, all the proper files will be used for the given session, subject, or separately, by subject, for the whole project.
 
 ## Setup:
 Before running BIDS curation on your data, you must first prepare your data with the following steps:
@@ -33,7 +33,7 @@ Note that bids-fmriprep can take a *long* time to run because it runs Freesurfer
 
 ## Inputs
 
-Because the project has been BIDS curated, all of the proper T1, T2, and fMRI files will be automatically found.
+Because the project has been BIDS curated, all the proper T1, T2, and fMRI files will be automatically found.
 
 ### bidsignore (optional)
 A list of patterns (like .gitignore syntax) defining files that should be ignored by the
