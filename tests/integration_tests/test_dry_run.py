@@ -31,6 +31,14 @@ def test_dry_run_works(
         assert status == 0
         assert (FWV0 / "work/bids/.bidsignore").exists()
         assert (FWV0 / "freesurfer/subjects/sub-42/label/empty").exists()
+        assert search_caplog_contains(
+            caplog,
+            "command is",
+            "--bids-filter-file=input/bids-filter-file/PyBIDS_filter.json",
+        )
+        assert search_caplog_contains(
+            caplog, "--work-dir", "flywheel/v0/output/61608fc7dbf5f9487f231006"
+        )
         assert search_caplog_contains(caplog, "command is", "participant")
         assert search_caplog_contains(caplog, "command is", "'arg1', 'arg2'")
         assert search_caplog(caplog, "No BIDS errors detected.")

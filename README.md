@@ -39,13 +39,20 @@ Because the project has been BIDS curated, all the proper T1, T2, and fMRI files
 A list of patterns (like .gitignore syntax) defining files that should be ignored by the
 bids validator.
 
+### bids-filter-file (optional)
+
+A JSON file describing custom BIDS input filters using PyBIDS.  [See here](https://fmriprep.org/en/20.2.6/faq.html#how-do-i-select-only-certain-files-to-be-input-to-fmriprep) for details.  Recommendation: start with the default and edit it to be like the example shown there.  This does the opposite of what providing a bidsignore file does: it only keeps what matches the filters.
+
 ### freesurfer_license (optional)
 Your FreeSurfer license file. [Obtaining a license is free](https://surfer.nmr.mgh.harvard.edu/registration.html).
 This file will be copied into the $FSHOME directory.  There are [three ways](https://docs.flywheel.io/hc/en-us/articles/360013235453-How-to-include-a-Freesurfer-license-file-in-order-to-run-the-fMRIPrep-gear-)
 to provide the license to this gear.  A license is required for this gear to run.
 
-## fs-subjects-dir
+### fs-subjects-dir (optional)
 Zip file of existing FreeSurfer subject's directory to reuse.  If the output of FreeSurfer recon-all is provided to fMRIPrep, that output will be used rather than re-running recon-all.  Unzipping the file should produce a particular subject's directory which will be placed in the $FREESURFER_HOME/subjects directory.  The name of the directory must match the -subjid as passed to recon-all.  This version of fMRIPrep uses Freesurfer v6.0.1.
+
+### work-dir (optional)
+Provide intermediate fMRIPrep results as a zip file.  This file will be unzipped into the work directory so that previous results will be used instead of re-calculating them.  This option is provided so that bids-fmriprep can be run incrementally as new data is acquired.  The zip file to provide can be produced by using the gear-save-intermediate-output configuration option.  You definitely also want to use the fs-subject-dir input (above) so that FreeSurfer won't be run multiple times.
 
 ## Config:
 Most config options are identical to those used in fmriprep, and so documentation can be found here https://fmriprep.readthedocs.io/en/stable/usage.html.

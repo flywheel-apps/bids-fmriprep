@@ -175,3 +175,5 @@ fabric.properties
 
 # vim
 .*.swp
+
+.idea/

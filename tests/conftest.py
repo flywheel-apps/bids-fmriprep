@@ -31,7 +31,15 @@ def install_gear():
         if Path(FWV0 / "config.json").exists():
             Path(FWV0 / "config.json").unlink()
 
-        for dir_name in ["input", "output", "work", "freesurfer", "templateflow"]:
+        for dir_name in [
+            "input",
+            "output",
+            "work",
+            "freesurfer",
+            "templateflow",
+            "unzip-dir1",
+            "unzip-dir2",
+        ]:
             path = Path(FWV0 / dir_name)
             if path.exists():
                 print(f"shutil.rmtree({str(path)}")

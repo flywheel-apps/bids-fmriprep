@@ -66,6 +66,8 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
 
     # start with the command itself:
     cmd = [
+        "/usr/bin/time",
+        "-v",
         BIDS_APP,
         os.path.join(work_dir, "bids"),
         str(output_analysis_id_dir),
@@ -150,6 +152,14 @@ def main(gtk_context):
     # This allows the raw output to be deleted so that a zipped archive
     # can be returned.
     output_analysis_id_dir = output_dir / destination_id
+    log.info("Creating output directory %s", output_analysis_id_dir)
+    if Path(output_analysis_id_dir).exists():
+        log.info(
+            "Not actually creating output directory %s because it exists.  This must be a test",
+            output_analysis_id_dir,
+        )
+    else:
+        Path(output_analysis_id_dir).mkdir()
 
     environ = get_and_log_environment()
 
@@ -172,14 +182,39 @@ def main(gtk_context):
         (subjects_dir / "fsaverage5").symlink_to(orig_subject_dir / "fsaverage5")
         (subjects_dir / "fsaverage6").symlink_to(orig_subject_dir / "fsaverage6")
 
+    bids_filter_file_path = gtk_context.get_input_path("bids-filter-file")
+    if bids_filter_file_path:
+        paths = list(Path("input/bids-filter-file").glob("*"))
+        log.info("Using provided PyBIDS filter file %s", str(paths[0]))
+        config["bids-filter-file"] = str(paths[0])
+
     subject_zip_file_path = gtk_context.get_input_path("fs-subjects-dir")
     if subject_zip_file_path:
         paths = list(Path("input/fs-subjects-dir").glob("*"))
         log.info("Using provided Freesurfer subject file %s", str(paths[0]))
-        unzip_archive(paths[0], subjects_dir)
-
-        # Add --fs-subjects-dir argument to the command
+        unzip_dir = FWV0 / "unzip-dir1"
+        unzip_dir.mkdir(parents=True)
+        unzip_archive(paths[0], unzip_dir)
+        for a_subject in unzip_dir.glob("*/*"):
+            if (subjects_dir / a_subject.name).exists():
+                log.info("Found %s but using existing", a_subject.name)
+            else:
+                log.info("Found %s", a_subject.name)
+                a_subject.rename(subjects_dir / a_subject.name)
         config["fs-subjects-dir"] = subjects_dir
+
+    previous_work_zip_file_path = gtk_context.get_input_path("work-dir")
+    if previous_work_zip_file_path:
+        paths = list(Path("input/work-dir").glob("*"))
+        log.info("Using provided fMRIPrep intermediate file %s", str(paths[0]))
+        unzip_dir = FWV0 / "unzip-dir2"
+        unzip_dir.mkdir(parents=True)
+        unzip_archive(paths[0], unzip_dir)
+        for a_dir in unzip_dir.glob("*/*"):
+            log.info("Found %s", a_dir.name)
+            if a_dir.name != "bids":
+                a_dir.rename(FWV0 / "work" / a_dir.name)
+        config["work-dir"] = output_analysis_id_dir
 
     environ["FS_LICENSE"] = str(FWV0 / "freesurfer/license.txt")
 
@@ -248,10 +283,6 @@ def main(gtk_context):
             pretend_it_ran(destination_id)
 
         else:
-            # Create output directory
-            log.info("Creating output directory %s", output_analysis_id_dir)
-            Path(output_analysis_id_dir).mkdir()
-
             if config["gear-log-level"] != "INFO":
                 # show what's in the current working directory just before running
                 os.system("tree -a .")
