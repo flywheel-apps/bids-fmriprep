@@ -95,9 +95,16 @@ Copy the contents of the license file and paste it into this argument.
 
 ## Troubleshooting
 
+### Resources
+
+fMRIPrep can require a large amount of memory and disk space depending on the number of acquisitions being analyzed.  There is also a trade-off between the cost of analysis and the amount of time necessary.
+There is a helpful discussion of this in the [FAQ](https://fmriprep.org/en/20.2.6/faq.html#how-much-cpu-time-and-ram-should-i-allocate-for-a-typical-fmriprep-run) and also on [NeuroStars](https://neurostars.org/t/how-much-ram-cpus-is-reasonable-to-run-pipelines-like-fmriprep/1086).  At the top of your job log, you should see the configuration of the virtual machine you are running on.  When a job finishes, the output of the GNU `time` command is placed into the "Custom Information" (metadata) on the analysis.  To see it, go to the "Analyses" tab for a project, subject, or session, click on an analysis and then on the "Custom Information" tab.
+
+### Metadata
+
 Depending upon your fMRIPrep workflow preferences, a variety of metadata and files may be required for successful execution. And because of this variation, not all cases will be caught during BIDS validation. If you are running into issues executing bids-fmriprep, we recommend reading through the configuration options explained with the [fMRIPrep Usage Notes](https://fmriprep.org/en/stable/usage.html) and double-checking the following:
 
-### Fieldmaps ([BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#fieldmap-data))
+#### Fieldmaps ([BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#fieldmap-data))
 
 - Phase encoding directions for fieldmaps and bold must be opposite.
     - Look for the `PhaseEncodingDirection` key in the file metadata (or exported JSON sidecar) and note the value (e.g., `j-`). If the fieldmap and the bold series it is `IntendedFor` do not have opposite `PhaseEncodingDirection`, fMRIPrep will error out with "ValueError: None of the discovered fieldmaps has the right phase encoding direction." BIDS specification details can be found [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-4-multiple-phase-encoded-directions-pepolar). For more information see discussions [here](https://github.com/nipreps/fmriprep/issues/1148#issuecomment-392363308) and [here](https://neurostars.org/t/phase-encoding-error-for-field-maps/2650).
@@ -138,6 +145,6 @@ Depending upon your fMRIPrep workflow preferences, a variety of metadata and fil
 
 - Note: `PhaseEncodingDirection` and `TotalReadoutTime` are typically required.
 
-### Functional ([BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#task-including-resting-state-imaging-data))
+#### Functional ([BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#task-including-resting-state-imaging-data))
 
 - Each functional NIfTI needs the following metadata: `EchoTime`, `EffectiveEchoSpacing`, `PhaseEncodingDirection`,`RepetitionTime`, `SliceTiming`, and `TaskName`.

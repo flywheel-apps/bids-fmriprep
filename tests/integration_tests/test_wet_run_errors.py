@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 from unittest import TestCase
@@ -38,3 +39,13 @@ def test_wet_run_errors(
         assert search_caplog_contains(
             caplog, "command is:", "--ignore fieldmaps slicetiming"
         )
+
+        meta_file = Path.cwd() / "output/.metadata.json"
+        assert meta_file.exists()
+        with open(meta_file) as json_file:
+            metadata = json.load(json_file)
+            assert (
+                "Elapsed (wall clock) time (h:mm:ss or m:ss)"
+                in metadata["analysis"]["info"]["resources used"]
+            )
+            assert len(metadata["analysis"]["info"]["resources used"]) == 23

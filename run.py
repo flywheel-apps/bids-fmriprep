@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run the gear: set up for and call command-line command."""
 
+import json
 import logging
 import os
 import re
@@ -68,6 +69,7 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
     cmd = [
         "/usr/bin/time",
         "-v",
+        "--output=time_output.txt",
         BIDS_APP,
         os.path.join(work_dir, "bids"),
         str(output_analysis_id_dir),
@@ -302,6 +304,28 @@ def main(gtk_context):
         log.exception("Unable to execute command.")
 
     finally:
+
+        # Save time, etc. resources used in metadata on analysis
+        if Path("time_output.txt").exists():  # some tests won't have this file
+            metadata = {
+                "analysis": {"info": {"resources used": {},},},
+            }
+            with open("time_output.txt") as file:
+                for line in file:
+                    if ":" in line:
+                        if (
+                            "Elapsed" in line
+                        ):  # special case "Elapsed (wall clock) time (h:mm:ss or m:ss): 0:08.11"
+                            sline = re.split(r"\):", line)
+                            sline[0] += ")"
+                        else:
+                            sline = line.split(":")
+                        key = sline[0].strip()
+                        val = sline[1].strip(' "\n')
+                        metadata["analysis"]["info"]["resources used"][key] = val
+            with open(f"{output_dir}/.metadata.json", "w") as fff:
+                json.dump(metadata, fff)
+                log.info(f"Wrote {output_dir}/.metadata.json")
 
         # Cleanup, move all results to the output directory
 

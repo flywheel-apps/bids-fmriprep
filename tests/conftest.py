@@ -28,8 +28,12 @@ def install_gear():
 
         print("\nRemoving previous gear...")
 
-        if Path(FWV0 / "config.json").exists():
-            Path(FWV0 / "config.json").unlink()
+        for file_name in [
+            "config.json",
+            "time_output.txt",
+        ]:
+            if Path(FWV0 / file_name).exists():
+                Path(FWV0 / file_name).unlink()
 
         for dir_name in [
             "input",
