@@ -47,8 +47,8 @@ def set_n_cpus(n_cpus, omp_nthreads):
     return n_cpus, omp_nthreads
 
 
-def set_mem_gb(mem_gb):
-    """Set --mem (maximum memory to usen in GB) to pass to BIDS App.
+def set_mem_mb(mem_mb):
+    """Set --mem (maximum memory to use in MB) to pass to BIDS App.
 
     Use the given number unless it is too big.  Use the max available if zero.
 
@@ -56,22 +56,22 @@ def set_mem_gb(mem_gb):
     shared compute resource.
 
     Args:
-        mem_gb (float) number of GiB to use
+        mem_mb (float) number of MB to use
 
     Returns:
-        mem_gb (float) which will become part of the command line command
+        mem_mb (float) which will become part of the command line command
     """
 
-    psutil_mem_gb = int(psutil.virtual_memory().available / (1024 ** 3))
-    log.info("psutil.virtual_memory().available= {:5.2f} GiB".format(psutil_mem_gb))
-    if mem_gb:
-        if mem_gb > psutil_mem_gb:
-            log.warning("mem > number available, using max %d", psutil_mem_gb)
-            mem_gb = psutil_mem_gb
+    psutil_mem_mb = int(psutil.virtual_memory().available / (1024 ** 2))
+    log.info("psutil.virtual_memory().available= {:5.2f} GiB".format(psutil_mem_mb))
+    if mem_mb:
+        if mem_mb > psutil_mem_mb:
+            log.warning("mem > number available, using max %d", psutil_mem_mb)
+            mem_mb = psutil_mem_mb
         else:
-            log.info("mem using %d from config", mem_gb)
+            log.info("mem using %d from config", mem_mb)
     else:  # Default is to use all memory available
-        mem_gb = psutil_mem_gb
-        log.info("using mem = %d (maximum available)", psutil_mem_gb)
+        mem_mb = psutil_mem_mb
+        log.info("using mem = %d (maximum available)", psutil_mem_mb)
 
-    return mem_gb
+    return mem_mb
