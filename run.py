@@ -21,7 +21,7 @@ from utils.bids.run_level import get_analysis_run_level_and_hierarchy
 from utils.dry_run import pretend_it_ran
 from utils.fly.environment import get_and_log_environment
 from utils.fly.make_file_name_safe import make_file_name_safe
-from utils.fly.set_performance_config import set_mem_gb, set_n_cpus
+from utils.fly.set_performance_config import set_mem_mb, set_n_cpus
 from utils.freesurfer import install_freesurfer_license
 from utils.results.zip_htmls import zip_htmls
 from utils.results.zip_intermediate import (
@@ -169,7 +169,7 @@ def main(gtk_context):
     config["n_cpus"], config["omp-nthreads"] = set_n_cpus(
         config.get("n_cpus"), config.get("omp-nthreads")
     )
-    config["mem"] = set_mem_gb(config.get("mem_mb"))
+    config["mem"] = set_mem_mb(config.get("mem_mb"))
 
     environ["OMP_NUM_THREADS"] = str(config["omp-nthreads"])
 
