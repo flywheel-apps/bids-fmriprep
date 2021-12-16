@@ -39,13 +39,20 @@ Because the project has been BIDS curated, all the proper T1, T2, and fMRI files
 A list of patterns (like .gitignore syntax) defining files that should be ignored by the
 bids validator.
 
+### bids-filter-file (optional)
+
+A JSON file describing custom BIDS input filters using PyBIDS.  [See here](https://fmriprep.org/en/20.2.6/faq.html#how-do-i-select-only-certain-files-to-be-input-to-fmriprep) for details.  Recommendation: start with the default and edit it to be like the example shown there.  This does the opposite of what providing a bidsignore file does: it only keeps what matches the filters.
+
 ### freesurfer_license (optional)
 Your FreeSurfer license file. [Obtaining a license is free](https://surfer.nmr.mgh.harvard.edu/registration.html).
 This file will be copied into the $FSHOME directory.  There are [three ways](https://docs.flywheel.io/hc/en-us/articles/360013235453-How-to-include-a-Freesurfer-license-file-in-order-to-run-the-fMRIPrep-gear-)
 to provide the license to this gear.  A license is required for this gear to run.
 
-## fs-subjects-dir
+### fs-subjects-dir (optional)
 Zip file of existing FreeSurfer subject's directory to reuse.  If the output of FreeSurfer recon-all is provided to fMRIPrep, that output will be used rather than re-running recon-all.  Unzipping the file should produce a particular subject's directory which will be placed in the $FREESURFER_HOME/subjects directory.  The name of the directory must match the -subjid as passed to recon-all.  This version of fMRIPrep uses Freesurfer v6.0.1.
+
+### work-dir (optional)
+THIS IS A FUTURE OPTIONAL INPUT.  It has not yet been added.  Provide intermediate fMRIPrep results as a zip file.  This file will be unzipped into the work directory so that previous results will be used instead of re-calculating them.  This option is provided so that bids-fmriprep can be run incrementally as new data is acquired.  The zip file to provide can be produced by using the gear-save-intermediate-output configuration option.  You definitely also want to use the fs-subject-dir input (above) so that FreeSurfer won't be run multiple times.
 
 ## Config:
 Most config options are identical to those used in fmriprep, and so documentation can be found here https://fmriprep.readthedocs.io/en/stable/usage.html.
@@ -88,9 +95,16 @@ Copy the contents of the license file and paste it into this argument.
 
 ## Troubleshooting
 
+### Resources
+
+fMRIPrep can require a large amount of memory and disk space depending on the number of acquisitions being analyzed.  There is also a trade-off between the cost of analysis and the amount of time necessary.
+There is a helpful discussion of this in the [FAQ](https://fmriprep.org/en/20.2.6/faq.html#how-much-cpu-time-and-ram-should-i-allocate-for-a-typical-fmriprep-run) and also on [NeuroStars](https://neurostars.org/t/how-much-ram-cpus-is-reasonable-to-run-pipelines-like-fmriprep/1086).  At the top of your job log, you should see the configuration of the virtual machine you are running on.  When a job finishes, the output of the GNU `time` command is placed into the "Custom Information" (metadata) on the analysis.  To see it, go to the "Analyses" tab for a project, subject, or session, click on an analysis and then on the "Custom Information" tab.
+
+### Metadata
+
 Depending upon your fMRIPrep workflow preferences, a variety of metadata and files may be required for successful execution. And because of this variation, not all cases will be caught during BIDS validation. If you are running into issues executing bids-fmriprep, we recommend reading through the configuration options explained with the [fMRIPrep Usage Notes](https://fmriprep.org/en/stable/usage.html) and double-checking the following:
 
-### Fieldmaps ([BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#fieldmap-data))
+#### Fieldmaps ([BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#fieldmap-data))
 
 - Phase encoding directions for fieldmaps and bold must be opposite.
     - Look for the `PhaseEncodingDirection` key in the file metadata (or exported JSON sidecar) and note the value (e.g., `j-`). If the fieldmap and the bold series it is `IntendedFor` do not have opposite `PhaseEncodingDirection`, fMRIPrep will error out with "ValueError: None of the discovered fieldmaps has the right phase encoding direction." BIDS specification details can be found [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#case-4-multiple-phase-encoded-directions-pepolar). For more information see discussions [here](https://github.com/nipreps/fmriprep/issues/1148#issuecomment-392363308) and [here](https://neurostars.org/t/phase-encoding-error-for-field-maps/2650).
@@ -131,6 +145,6 @@ Depending upon your fMRIPrep workflow preferences, a variety of metadata and fil
 
 - Note: `PhaseEncodingDirection` and `TotalReadoutTime` are typically required.
 
-### Functional ([BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#task-including-resting-state-imaging-data))
+#### Functional ([BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#task-including-resting-state-imaging-data))
 
 - Each functional NIfTI needs the following metadata: `EchoTime`, `EffectiveEchoSpacing`, `PhaseEncodingDirection`,`RepetitionTime`, `SliceTiming`, and `TaskName`.

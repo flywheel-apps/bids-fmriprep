@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 from unittest import TestCase
@@ -14,6 +15,10 @@ def test_bids_error_reports(caplog, install_gear, search_caplog):
     user_json = Path(Path.home() / ".config/flywheel/user.json")
     if not user_json.exists():
         TestCase.skipTest("", f"No API key available in {str(user_json)}")
+    with open(user_json) as json_file:
+        data = json.load(json_file)
+        if "ga" not in data["key"]:
+            TestCase.skipTest("", "Not logged in to ga.")
 
     install_gear("bids_error.zip")
 

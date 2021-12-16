@@ -16,6 +16,7 @@ RUN python -c 'import os, json; f = open("/flywheel/v0/gear_environ.json", "w");
 RUN apt-get update && \
     curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
     apt-get install -y \
+    time \
     zip \
     nodejs \
     tree && \

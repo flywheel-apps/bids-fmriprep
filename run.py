@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run the gear: set up for and call command-line command."""
 
+import json
 import logging
 import os
 import re
@@ -66,6 +67,9 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
 
     # start with the command itself:
     cmd = [
+        "/usr/bin/time",
+        "-v",
+        "--output=time_output.txt",
         BIDS_APP,
         os.path.join(work_dir, "bids"),
         str(output_analysis_id_dir),
@@ -116,7 +120,7 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
 def main(gtk_context):
 
     FWV0 = Path.cwd()
-    log.debug("Running gear in %s", FWV0)
+    log.info("Running gear in %s", FWV0)
 
     gtk_context.log_config()
 
@@ -127,9 +131,9 @@ def main(gtk_context):
     warnings = []
 
     output_dir = gtk_context.output_dir
-    log.debug("output_dir is %s", output_dir)
+    log.info("output_dir is %s", output_dir)
     work_dir = gtk_context.work_dir
-    log.debug("work_dir is %s", work_dir)
+    log.info("work_dir is %s", work_dir)
     gear_name = gtk_context.manifest["name"]
 
     # run-time configuration options from the gear's context.json
@@ -150,6 +154,14 @@ def main(gtk_context):
     # This allows the raw output to be deleted so that a zipped archive
     # can be returned.
     output_analysis_id_dir = output_dir / destination_id
+    log.info("Creating output directory %s", output_analysis_id_dir)
+    if Path(output_analysis_id_dir).exists():
+        log.info(
+            "Not actually creating output directory %s because it exists.  This must be a test",
+            output_analysis_id_dir,
+        )
+    else:
+        Path(output_analysis_id_dir).mkdir()
 
     environ = get_and_log_environment()
 
@@ -172,14 +184,89 @@ def main(gtk_context):
         (subjects_dir / "fsaverage5").symlink_to(orig_subject_dir / "fsaverage5")
         (subjects_dir / "fsaverage6").symlink_to(orig_subject_dir / "fsaverage6")
 
+    bids_filter_file_path = gtk_context.get_input_path("bids-filter-file")
+    if bids_filter_file_path:
+        paths = list(Path("input/bids-filter-file").glob("*"))
+        log.info("Using provided PyBIDS filter file %s", str(paths[0]))
+        config["bids-filter-file"] = str(paths[0])
+
+    previous_work_zip_file_path = gtk_context.get_input_path("work-dir")
+    if previous_work_zip_file_path:
+        paths = list(Path("input/work-dir").glob("*"))
+        log.info("Using provided fMRIPrep intermediate work file %s", str(paths[0]))
+        unzip_dir = FWV0 / "unzip-work-dir"
+        unzip_dir.mkdir(parents=True)
+        unzip_archive(paths[0], unzip_dir)
+        for a_dir in unzip_dir.glob("*/*"):
+            if (
+                a_dir.name == "bids"
+            ):  # skip previous bids directory so current bids data will be used
+                log.info(
+                    "Found %s, but ignoring it to use current bids data", a_dir.name
+                )
+            else:
+                log.info("Found %s", a_dir.name)
+                a_dir.rename(FWV0 / "work" / a_dir.name)
+        hash_file = list(Path("work/fmriprep_wf/").glob("fsdir_run_*/_0x*.json"))[0]
+        if hash_file.exists():
+            with open(hash_file) as json_file:
+                data = json.load(json_file)
+                old_tmp_path = data[0][1]
+                old_tmp_name = old_tmp_path.split("/")[2]
+                log.info("Found old tmp name: %s", old_tmp_name)
+                cur_tmp_name = str(FWV0).split("/")[2]
+                # rename the directory to the old name
+                Path("/tmp/" + cur_tmp_name).replace(Path("/tmp/" + old_tmp_name))
+                # create a symbolic link using the new name to the old name just in case
+                Path("/tmp/" + cur_tmp_name).symlink_to(
+                    Path("/tmp/" + old_tmp_name), target_is_directory=True
+                )
+                # update all variables to have the old directory name in them
+                FWV0 = Path("/tmp/" + old_tmp_name + "/flywheel/v0")
+                output_dir = str(output_dir).replace(cur_tmp_name, old_tmp_name)
+                output_analysis_id_dir = Path(
+                    str(output_analysis_id_dir).replace(cur_tmp_name, old_tmp_name)
+                )
+                log.info("new output directory is: %s", output_dir)
+                work_dir = Path(str(work_dir).replace(cur_tmp_name, old_tmp_name))
+                log.info("new work directory is: %s", work_dir)
+                subjects_dir = Path(
+                    str(subjects_dir).replace(cur_tmp_name, old_tmp_name)
+                )
+                config["fs-subjects-dir"] = subjects_dir
+                log.info("new FreeSurfer subjects directory is: %s", subjects_dir)
+                # for old work to be recognized, switch to running from the old path
+                os.chdir(FWV0)
+                log.info("cd %s", FWV0)
+        else:
+            log.info("Could not find hash file")
+        config["work-dir"] = str(FWV0 / "work")
+
     subject_zip_file_path = gtk_context.get_input_path("fs-subjects-dir")
     if subject_zip_file_path:
         paths = list(Path("input/fs-subjects-dir").glob("*"))
         log.info("Using provided Freesurfer subject file %s", str(paths[0]))
-        unzip_archive(paths[0], subjects_dir)
-
-        # Add --fs-subjects-dir argument to the command
+        unzip_dir = FWV0 / "unzip-fs-subjects-dir"
+        unzip_dir.mkdir(parents=True)
+        unzip_archive(paths[0], unzip_dir)
+        for a_subject in unzip_dir.glob("*/*"):
+            if (subjects_dir / a_subject.name).exists():
+                log.info("Found %s but using existing", a_subject.name)
+            else:
+                log.info("Found %s", a_subject.name)
+                a_subject.rename(subjects_dir / a_subject.name)
         config["fs-subjects-dir"] = subjects_dir
+
+    previous_results_zip_file_path = gtk_context.get_input_path("previous-results")
+    if previous_results_zip_file_path:
+        paths = list(Path("input/previous-results").glob("*"))
+        log.info("Using provided fMRIPrep previous results file %s", str(paths[0]))
+        unzip_dir = FWV0 / "unzip-previous-results"
+        unzip_dir.mkdir(parents=True)
+        unzip_archive(paths[0], unzip_dir)
+        for a_dir in unzip_dir.glob("*/*"):
+            log.info("Found %s", a_dir.name)
+            a_dir.rename(output_analysis_id_dir / a_dir.name)
 
     environ["FS_LICENSE"] = str(FWV0 / "freesurfer/license.txt")
 
@@ -205,15 +292,12 @@ def main(gtk_context):
         config, work_dir, output_analysis_id_dir, errors, warnings
     )
 
-    # This is used as part of the name of output files
-    command_name = make_file_name_safe(command[0])
-
     # Download BIDS Formatted data
     if len(errors) == 0:
 
         # Create HTML file that shows BIDS "Tree" like output
         tree = True
-        tree_title = f"{command_name} BIDS Tree"
+        tree_title = f"{gear_name} BIDS Tree"
 
         error_code = download_bids_for_runlevel(
             gtk_context,
@@ -248,13 +332,9 @@ def main(gtk_context):
             pretend_it_ran(destination_id)
 
         else:
-            # Create output directory
-            log.info("Creating output directory %s", output_analysis_id_dir)
-            Path(output_analysis_id_dir).mkdir()
-
             if config["gear-log-level"] != "INFO":
                 # show what's in the current working directory just before running
-                os.system("tree -a .")
+                os.system("tree -al .")
 
             if "gear-timeout" in config:
                 command = [f"timeout {config['gear-timeout']}"] + command
@@ -271,6 +351,28 @@ def main(gtk_context):
         log.exception("Unable to execute command.")
 
     finally:
+
+        # Save time, etc. resources used in metadata on analysis
+        if Path("time_output.txt").exists():  # some tests won't have this file
+            metadata = {
+                "analysis": {"info": {"resources used": {},},},
+            }
+            with open("time_output.txt") as file:
+                for line in file:
+                    if ":" in line:
+                        if (
+                            "Elapsed" in line
+                        ):  # special case "Elapsed (wall clock) time (h:mm:ss or m:ss): 0:08.11"
+                            sline = re.split(r"\):", line)
+                            sline[0] += ")"
+                        else:
+                            sline = line.split(":")
+                        key = sline[0].strip()
+                        val = sline[1].strip(' "\n')
+                        metadata["analysis"]["info"]["resources used"][key] = val
+            with open(f"{output_dir}/.metadata.json", "w") as fff:
+                json.dump(metadata, fff)
+                log.info(f"Wrote {output_dir}/.metadata.json")
 
         # Cleanup, move all results to the output directory
 

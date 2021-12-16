@@ -1,3 +1,4 @@
+import json
 import logging
 import pprint
 from pathlib import Path
@@ -20,6 +21,10 @@ def test_fake_data_killed(
     user_json = Path(Path.home() / ".config/flywheel/user.json")
     if not user_json.exists():
         TestCase.skipTest("", f"No API key available in {str(user_json)}")
+    with open(user_json) as json_file:
+        data = json.load(json_file)
+        if "ga" not in data["key"]:
+            TestCase.skipTest("", "Not logged in to ga.")
 
     install_gear("fake_data.zip")
 
@@ -37,8 +42,7 @@ def test_fake_data_killed(
 
         assert status == 1
 
-        assert toml_info["execution"]["fs_license_file"] == str(
-            FWV0 / "freesurfer/license.txt"
-        )
+        assert "freesurfer/license.txt" in toml_info["execution"]["fs_license_file"]
+
         assert toml_info["execution"]["templateflow_home"] == str(FWV0 / "templateflow")
         assert search_caplog(caplog, "Unable to execute command")

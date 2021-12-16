@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 from pathlib import Path
 from unittest import TestCase
 
@@ -19,6 +21,10 @@ def test_dry_run_works(
     user_json = Path(Path.home() / ".config/flywheel/user.json")
     if not user_json.exists():
         TestCase.skipTest("", f"No API key available in {str(user_json)}")
+    with open(user_json) as json_file:
+        data = json.load(json_file)
+        if "ga" not in data["key"]:
+            TestCase.skipTest("", "Not logged in to ga.")
 
     FWV0 = Path.cwd()
 
@@ -31,6 +37,33 @@ def test_dry_run_works(
         assert status == 0
         assert (FWV0 / "work/bids/.bidsignore").exists()
         assert (FWV0 / "freesurfer/subjects/sub-42/label/empty").exists()
+        assert search_caplog_contains(
+            caplog,
+            "command is",
+            "--bids-filter-file=input/bids-filter-file/PyBIDS_filter.json",
+        )
+        assert search_caplog_contains(
+            caplog, "--work-dir", "flywheel/v0/output/61608fc7dbf5f9487f231006"
+        )
+
+        # Since the "work-dir" option was used, the gear created the old data's /tmp/ path and
+        # ran in it, and a symbolic link was created from the current /tmp/ path to the old one.
+        # The "current" path was created just before these tests started (in conftest.py). E.g.:
+        # % ls /tmp
+        # gear-temp-dir-2cde80oy -> /tmp/gear-temp-dir-yhv7hq29
+        # gear-temp-dir-yhv7hq29
+        # where "yhv7hq29" is the old random part found in the provided "work-dir" data and
+        # "2cde80oy" is the new random part of the /tmp/ path created to run these tests.
+        # The new part is generated randomly so it will change but the old one is in the gear test
+        # data provided as an input to the gear.
+        old_tmp_path = Path(*(list(Path.cwd().parts)[:3]))
+        assert "yhv7hq29" in list(old_tmp_path.parts)[2]
+        current_tmp_path = Path(*(list(FWV0.parts)[:3]))
+        assert current_tmp_path.is_symlink()
+        # now change back to the original /tmp/ path so that following tests will not be affected
+        current_tmp_path.unlink()
+        old_tmp_path.replace(current_tmp_path)
+
         assert search_caplog_contains(caplog, "command is", "participant")
         assert search_caplog_contains(caplog, "command is", "'arg1', 'arg2'")
         assert search_caplog(caplog, "No BIDS errors detected.")
