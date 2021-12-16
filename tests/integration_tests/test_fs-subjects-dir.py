@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 from unittest import TestCase
@@ -19,6 +20,10 @@ def test_fs_subjects_dir_works(
     user_json = Path(Path.home() / ".config/flywheel/user.json")
     if not user_json.exists():
         TestCase.skipTest("", f"No API key available in {str(user_json)}")
+    with open(user_json) as json_file:
+        data = json.load(json_file)
+        if "ga" not in data["key"]:
+            TestCase.skipTest("", "Not logged in to ga.")
 
     FWV0 = Path.cwd()
 

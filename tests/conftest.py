@@ -41,9 +41,9 @@ def install_gear():
             "work",
             "freesurfer",
             "templateflow",
-            "unzip-dir1",
-            "unzip-dir2",
-            "unzip-dir3",
+            "unzip-work-dir",
+            "unzip-fs-subjects-dir",
+            "unzip-previous-results",
         ]:
             path = Path(FWV0 / dir_name)
             if path.exists():

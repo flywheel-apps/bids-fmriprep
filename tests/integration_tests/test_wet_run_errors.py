@@ -17,6 +17,10 @@ def test_wet_run_errors(
     user_json = Path(Path.home() / ".config/flywheel/user.json")
     if not user_json.exists():
         TestCase.skipTest("", f"No API key available in {str(user_json)}")
+    with open(user_json) as json_file:
+        data = json.load(json_file)
+        if "ga" not in data["key"]:
+            TestCase.skipTest("", "Not logged in to ga.")
 
     # This fake gear must have a destination that has an analysis on a session that has
     # no bold scans (like BIDS_multi_session/ses-Session2).  It downloads the BIDS data

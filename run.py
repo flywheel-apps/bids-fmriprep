@@ -194,7 +194,7 @@ def main(gtk_context):
     if previous_work_zip_file_path:
         paths = list(Path("input/work-dir").glob("*"))
         log.info("Using provided fMRIPrep intermediate work file %s", str(paths[0]))
-        unzip_dir = FWV0 / "unzip-dir2"
+        unzip_dir = FWV0 / "unzip-work-dir"
         unzip_dir.mkdir(parents=True)
         unzip_archive(paths[0], unzip_dir)
         for a_dir in unzip_dir.glob("*/*"):
@@ -246,7 +246,7 @@ def main(gtk_context):
     if subject_zip_file_path:
         paths = list(Path("input/fs-subjects-dir").glob("*"))
         log.info("Using provided Freesurfer subject file %s", str(paths[0]))
-        unzip_dir = FWV0 / "unzip-dir1"
+        unzip_dir = FWV0 / "unzip-fs-subjects-dir"
         unzip_dir.mkdir(parents=True)
         unzip_archive(paths[0], unzip_dir)
         for a_subject in unzip_dir.glob("*/*"):
@@ -261,7 +261,7 @@ def main(gtk_context):
     if previous_results_zip_file_path:
         paths = list(Path("input/previous-results").glob("*"))
         log.info("Using provided fMRIPrep previous results file %s", str(paths[0]))
-        unzip_dir = FWV0 / "unzip-dir3"
+        unzip_dir = FWV0 / "unzip-previous-results"
         unzip_dir.mkdir(parents=True)
         unzip_archive(paths[0], unzip_dir)
         for a_dir in unzip_dir.glob("*/*"):
