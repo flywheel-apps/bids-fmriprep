@@ -120,7 +120,7 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
 def main(gtk_context):
 
     FWV0 = Path.cwd()
-    log.debug("Running gear in %s", FWV0)
+    log.info("Running gear in %s", FWV0)
 
     gtk_context.log_config()
 
@@ -131,9 +131,9 @@ def main(gtk_context):
     warnings = []
 
     output_dir = gtk_context.output_dir
-    log.debug("output_dir is %s", output_dir)
+    log.info("output_dir is %s", output_dir)
     work_dir = gtk_context.work_dir
-    log.debug("work_dir is %s", work_dir)
+    log.info("work_dir is %s", work_dir)
     gear_name = gtk_context.manifest["name"]
 
     # run-time configuration options from the gear's context.json
@@ -190,6 +190,58 @@ def main(gtk_context):
         log.info("Using provided PyBIDS filter file %s", str(paths[0]))
         config["bids-filter-file"] = str(paths[0])
 
+    previous_work_zip_file_path = gtk_context.get_input_path("work-dir")
+    if previous_work_zip_file_path:
+        paths = list(Path("input/work-dir").glob("*"))
+        log.info("Using provided fMRIPrep intermediate work file %s", str(paths[0]))
+        unzip_dir = FWV0 / "unzip-dir2"
+        unzip_dir.mkdir(parents=True)
+        unzip_archive(paths[0], unzip_dir)
+        for a_dir in unzip_dir.glob("*/*"):
+            if (
+                a_dir.name == "bids"
+            ):  # skip previous bids directory so current bids data will be used
+                log.info(
+                    "Found %s, but ignoring it to use current bids data", a_dir.name
+                )
+            else:
+                log.info("Found %s", a_dir.name)
+                a_dir.rename(FWV0 / "work" / a_dir.name)
+        hash_file = list(Path("work/fmriprep_wf/").glob("fsdir_run_*/_0x*.json"))[0]
+        if hash_file.exists():
+            with open(hash_file) as json_file:
+                data = json.load(json_file)
+                old_tmp_path = data[0][1]
+                old_tmp_name = old_tmp_path.split("/")[2]
+                log.info("Found old tmp name: %s", old_tmp_name)
+                cur_tmp_name = str(FWV0).split("/")[2]
+                # rename the directory to the old name
+                Path("/tmp/" + cur_tmp_name).replace(Path("/tmp/" + old_tmp_name))
+                # create a symbolic link using the new name to the old name just in case
+                Path("/tmp/" + cur_tmp_name).symlink_to(
+                    Path("/tmp/" + old_tmp_name), target_is_directory=True
+                )
+                # update all variables to have the old directory name in them
+                FWV0 = Path("/tmp/" + old_tmp_name + "/flywheel/v0")
+                output_dir = str(output_dir).replace(cur_tmp_name, old_tmp_name)
+                output_analysis_id_dir = Path(
+                    str(output_analysis_id_dir).replace(cur_tmp_name, old_tmp_name)
+                )
+                log.info("new output directory is: %s", output_dir)
+                work_dir = Path(str(work_dir).replace(cur_tmp_name, old_tmp_name))
+                log.info("new work directory is: %s", work_dir)
+                subjects_dir = Path(
+                    str(subjects_dir).replace(cur_tmp_name, old_tmp_name)
+                )
+                config["fs-subjects-dir"] = subjects_dir
+                log.info("new FreeSurfer subjects directory is: %s", subjects_dir)
+                # for old work to be recognized, switch to running from the old path
+                os.chdir(FWV0)
+                log.info("cd %s", FWV0)
+        else:
+            log.info("Could not find hash file")
+        config["work-dir"] = str(FWV0 / "work")
+
     subject_zip_file_path = gtk_context.get_input_path("fs-subjects-dir")
     if subject_zip_file_path:
         paths = list(Path("input/fs-subjects-dir").glob("*"))
@@ -205,18 +257,16 @@ def main(gtk_context):
                 a_subject.rename(subjects_dir / a_subject.name)
         config["fs-subjects-dir"] = subjects_dir
 
-    previous_work_zip_file_path = gtk_context.get_input_path("work-dir")
-    if previous_work_zip_file_path:
-        paths = list(Path("input/work-dir").glob("*"))
-        log.info("Using provided fMRIPrep intermediate file %s", str(paths[0]))
-        unzip_dir = FWV0 / "unzip-dir2"
+    previous_results_zip_file_path = gtk_context.get_input_path("previous-results")
+    if previous_results_zip_file_path:
+        paths = list(Path("input/previous-results").glob("*"))
+        log.info("Using provided fMRIPrep previous results file %s", str(paths[0]))
+        unzip_dir = FWV0 / "unzip-dir3"
         unzip_dir.mkdir(parents=True)
         unzip_archive(paths[0], unzip_dir)
         for a_dir in unzip_dir.glob("*/*"):
             log.info("Found %s", a_dir.name)
-            if a_dir.name != "bids":
-                a_dir.rename(FWV0 / "work" / a_dir.name)
-        config["work-dir"] = output_analysis_id_dir
+            a_dir.rename(output_analysis_id_dir / a_dir.name)
 
     environ["FS_LICENSE"] = str(FWV0 / "freesurfer/license.txt")
 
@@ -287,7 +337,7 @@ def main(gtk_context):
         else:
             if config["gear-log-level"] != "INFO":
                 # show what's in the current working directory just before running
-                os.system("tree -a .")
+                os.system("tree -al .")
 
             if "gear-timeout" in config:
                 command = [f"timeout {config['gear-timeout']}"] + command

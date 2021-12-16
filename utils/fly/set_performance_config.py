@@ -63,7 +63,7 @@ def set_mem_mb(mem_mb):
     """
 
     psutil_mem_mb = int(psutil.virtual_memory().available / (1024 ** 2))
-    log.info("psutil.virtual_memory().available= {:5.2f} GiB".format(psutil_mem_mb))
+    log.info("psutil.virtual_memory().available= {:5.2f} MiB".format(psutil_mem_mb))
     if mem_mb:
         if mem_mb > psutil_mem_mb:
             log.warning("mem > number available, using max %d", psutil_mem_mb)

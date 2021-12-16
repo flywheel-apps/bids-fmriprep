@@ -43,6 +43,7 @@ def install_gear():
             "templateflow",
             "unzip-dir1",
             "unzip-dir2",
+            "unzip-dir3",
         ]:
             path = Path(FWV0 / dir_name)
             if path.exists():

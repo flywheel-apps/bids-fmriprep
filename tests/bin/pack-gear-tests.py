@@ -5,8 +5,7 @@
 This will REMOVE the test .zip file if it already exists and it
 will remove the test directory after zipping.
 
-Use "pack-tests.py all" to zip every test unless it is already
-unzipped.
+Use "pack-tests.py all" to zip every directory.
 
 Example:
     pack-tests.py hello_world
