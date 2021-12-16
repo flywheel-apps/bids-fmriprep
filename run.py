@@ -292,15 +292,12 @@ def main(gtk_context):
         config, work_dir, output_analysis_id_dir, errors, warnings
     )
 
-    # This is used as part of the name of output files
-    command_name = make_file_name_safe(command[0])
-
     # Download BIDS Formatted data
     if len(errors) == 0:
 
         # Create HTML file that shows BIDS "Tree" like output
         tree = True
-        tree_title = f"{command_name} BIDS Tree"
+        tree_title = f"{gear_name} BIDS Tree"
 
         error_code = download_bids_for_runlevel(
             gtk_context,
