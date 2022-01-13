@@ -44,5 +44,5 @@ def test_fake_data_killed(
 
         assert "freesurfer/license.txt" in toml_info["execution"]["fs_license_file"]
 
-        assert toml_info["execution"]["templateflow_home"] == str(FWV0 / "templateflow")
+        # assert toml_info["execution"]["templateflow_home"] == str(FWV0 / "templateflow")
         assert search_caplog(caplog, "Unable to execute command")

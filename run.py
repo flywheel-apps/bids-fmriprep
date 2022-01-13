@@ -283,10 +283,11 @@ def main(gtk_context):
         FREESURFER_LICENSE,
     )
 
-    templateflow_dir = FWV0 / "templateflow"
-    templateflow_dir.mkdir()
-    environ["SINGULARITYENV_TEMPLATEFLOW_HOME"] = str(templateflow_dir)
-    environ["TEMPLATEFLOW_HOME"] = str(templateflow_dir)
+    # TemplateFlow seems to be baked in to the container since 2021-10-07 16:25:12 so this is not needed
+    # templateflow_dir = FWV0 / "templateflow"
+    # templateflow_dir.mkdir()
+    # environ["SINGULARITYENV_TEMPLATEFLOW_HOME"] = str(templateflow_dir)
+    # environ["TEMPLATEFLOW_HOME"] = str(templateflow_dir)
 
     command = generate_command(
         config, work_dir, output_analysis_id_dir, errors, warnings
