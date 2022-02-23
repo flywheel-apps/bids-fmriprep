@@ -190,58 +190,6 @@ def main(gtk_context):
         log.info("Using provided PyBIDS filter file %s", str(paths[0]))
         config["bids-filter-file"] = str(paths[0])
 
-    previous_work_zip_file_path = gtk_context.get_input_path("work-dir")
-    if previous_work_zip_file_path:
-        paths = list(Path("input/work-dir").glob("*"))
-        log.info("Using provided fMRIPrep intermediate work file %s", str(paths[0]))
-        unzip_dir = FWV0 / "unzip-work-dir"
-        unzip_dir.mkdir(parents=True)
-        unzip_archive(paths[0], unzip_dir)
-        for a_dir in unzip_dir.glob("*/*"):
-            if (
-                a_dir.name == "bids"
-            ):  # skip previous bids directory so current bids data will be used
-                log.info(
-                    "Found %s, but ignoring it to use current bids data", a_dir.name
-                )
-            else:
-                log.info("Found %s", a_dir.name)
-                a_dir.rename(FWV0 / "work" / a_dir.name)
-        hash_file = list(Path("work/fmriprep_wf/").glob("fsdir_run_*/_0x*.json"))[0]
-        if hash_file.exists():
-            with open(hash_file) as json_file:
-                data = json.load(json_file)
-                old_tmp_path = data[0][1]
-                old_tmp_name = old_tmp_path.split("/")[2]
-                log.info("Found old tmp name: %s", old_tmp_name)
-                cur_tmp_name = str(FWV0).split("/")[2]
-                # rename the directory to the old name
-                Path("/tmp/" + cur_tmp_name).replace(Path("/tmp/" + old_tmp_name))
-                # create a symbolic link using the new name to the old name just in case
-                Path("/tmp/" + cur_tmp_name).symlink_to(
-                    Path("/tmp/" + old_tmp_name), target_is_directory=True
-                )
-                # update all variables to have the old directory name in them
-                FWV0 = Path("/tmp/" + old_tmp_name + "/flywheel/v0")
-                output_dir = str(output_dir).replace(cur_tmp_name, old_tmp_name)
-                output_analysis_id_dir = Path(
-                    str(output_analysis_id_dir).replace(cur_tmp_name, old_tmp_name)
-                )
-                log.info("new output directory is: %s", output_dir)
-                work_dir = Path(str(work_dir).replace(cur_tmp_name, old_tmp_name))
-                log.info("new work directory is: %s", work_dir)
-                subjects_dir = Path(
-                    str(subjects_dir).replace(cur_tmp_name, old_tmp_name)
-                )
-                config["fs-subjects-dir"] = subjects_dir
-                log.info("new FreeSurfer subjects directory is: %s", subjects_dir)
-                # for old work to be recognized, switch to running from the old path
-                os.chdir(FWV0)
-                log.info("cd %s", FWV0)
-        else:
-            log.info("Could not find hash file")
-        config["work-dir"] = str(FWV0 / "work")
-
     subject_zip_file_path = gtk_context.get_input_path("fs-subjects-dir")
     if subject_zip_file_path:
         paths = list(Path("input/fs-subjects-dir").glob("*"))
@@ -459,18 +407,21 @@ def main(gtk_context):
 
 if __name__ == "__main__":
 
-    # always run in a newly created "scratch" directory in /tmp/...
-    scratch_dir = run_in_tmp_dir()
-
     with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
+
+        # make sure /flywheel/v0 is writable, use a scratch directory if not
+        scratch_dir = run_in_tmp_dir(gtk_context.config["gear-writable-dir"])
+
         return_code = main(gtk_context)
 
-    # clean up (might be necessary when running in a shared computing environment)
-    for thing in scratch_dir.glob("*"):
-        if thing.is_symlink():
-            thing.unlink()  # don't remove anything links point to
-            log.debug("unlinked %s", thing.name)
-    shutil.rmtree(scratch_dir)
-    log.debug("Removed %s", scratch_dir)
+        # clean up (might be necessary when running in a shared computing environment)
+        if scratch_dir:
+            log.debug("Removing scratch directory")
+            for thing in scratch_dir.glob("*"):
+                if thing.is_symlink():
+                    thing.unlink()  # don't remove anything links point to
+                    log.debug("unlinked %s", thing.name)
+            shutil.rmtree(scratch_dir)
+            log.debug("Removed %s", scratch_dir)
 
     sys.exit(return_code)

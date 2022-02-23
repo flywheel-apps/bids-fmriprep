@@ -6,7 +6,7 @@ from flywheel_gear_toolkit.utils.zip_tools import unzip_archive
 
 from utils.singularity import run_in_tmp_dir
 
-run_in_tmp_dir()  # run all tests in /tmp/*/flywheel/v0 where * is random
+run_in_tmp_dir("/var/tmp")  # run all tests in /tmp/*/flywheel/v0 where * is random
 
 FWV0 = Path.cwd()
 
