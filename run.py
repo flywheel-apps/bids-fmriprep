@@ -270,140 +270,159 @@ def main(gtk_context):
         log.info("Did not download BIDS because of previous errors")
         print(errors)
 
-    # Don't run if there were errors or if this is a dry run
+    if config["gear-log-level"] != "INFO":
+        # show what's in the current working directory just before running
+        os.system("tree -al .")
+
     return_code = 0
+    num_tries = 0
 
-    try:
-
-        if len(errors) > 0:
-            return_code = 1
-            log.info("Command was NOT run because of previous errors.")
-
-        elif dry_run:
-            e = "gear-dry-run is set: Command was NOT run."
-            log.warning(e)
-            warnings.append(e)
-            pretend_it_ran(destination_id)
-
-        else:
-            if config["gear-log-level"] != "INFO":
-                # show what's in the current working directory just before running
-                os.system("tree -al .")
-
-            if "gear-timeout" in config:
-                command = [f"timeout {config['gear-timeout']}"] + command
-
-            # This is what it is all about
-            exec_command(
-                command, environ=environ, dry_run=dry_run, shell=True, cont_output=True,
-            )
-
-    except RuntimeError as exc:
+    # Don't run if there were errors or if this is a dry run
+    if len(errors) > 0:
         return_code = 1
-        errors.append(exc)
-        log.critical(exc)
-        log.exception("Unable to execute command.")
+        log.info("Command was NOT run because of previous errors.")
+        num_tries == 2  # don't try to run
 
-    finally:
+    while num_tries < 2:
 
-        # Save time, etc. resources used in metadata on analysis
-        if Path("time_output.txt").exists():  # some tests won't have this file
-            metadata = {
-                "analysis": {"info": {"resources used": {},},},
-            }
-            with open("time_output.txt") as file:
-                for line in file:
-                    if ":" in line:
-                        if (
-                            "Elapsed" in line
-                        ):  # special case "Elapsed (wall clock) time (h:mm:ss or m:ss): 0:08.11"
-                            sline = re.split(r"\):", line)
-                            sline[0] += ")"
-                        else:
-                            sline = line.split(":")
-                        key = sline[0].strip()
-                        val = sline[1].strip(' "\n')
-                        metadata["analysis"]["info"]["resources used"][key] = val
-            with open(f"{output_dir}/.metadata.json", "w") as fff:
-                json.dump(metadata, fff)
-                log.info(f"Wrote {output_dir}/.metadata.json")
+        try:
 
-        # Cleanup, move all results to the output directory
+            num_tries += 1
+            if num_tries > 1:
+                log.info("Trying a second time")
 
-        # Remove all fsaverage* directories
-        if not config.get("gear-keep-fsaverage"):
-            path = output_analysis_id_dir / "freesurfer"
-            fsavg_dirs = path.glob("fsaverage*")
-            for fsavg in fsavg_dirs:
-                log.info("deleting %s", str(fsavg))
-                shutil.rmtree(fsavg)
-        else:
-            log.info("Keeping fsaverage directories")
-
-        # zip entire output/<analysis_id> folder into
-        #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
-        zip_file_name = gear_name + f"_{run_label}_{destination_id}.zip"
-        zip_output(
-            str(output_dir),
-            destination_id,
-            zip_file_name,
-            dry_run=False,
-            exclude_files=None,
-        )
-
-        # Make archives for result *.html files for easy display on platform
-        zip_htmls(output_dir, destination_id, output_analysis_id_dir / BIDS_APP)
-
-        # possibly save ALL intermediate output
-        if config.get("gear-save-intermediate-output"):
-            zip_all_intermediate_output(
-                destination_id, gear_name, output_dir, work_dir, run_label
-            )
-
-        # possibly save intermediate files and folders
-        zip_intermediate_selected(
-            config.get("gear-intermediate-files"),
-            config.get("gear-intermediate-folders"),
-            destination_id,
-            gear_name,
-            output_dir,
-            work_dir,
-            run_label,
-        )
-
-        # clean up: remove output that was zipped
-        if Path(output_analysis_id_dir).exists():
-            if not config.get("gear-keep-output"):
-
-                log.debug('removing output directory "%s"', str(output_analysis_id_dir))
-                shutil.rmtree(output_analysis_id_dir)
+            if dry_run:
+                e = "gear-dry-run is set: Command was NOT run."
+                log.warning(e)
+                warnings.append(e)
+                pretend_it_ran(destination_id)
 
             else:
-                log.info(
-                    'NOT removing output directory "%s"', str(output_analysis_id_dir)
+
+                if "gear-timeout" in config:
+                    command = [f"timeout {config['gear-timeout']}"] + command
+
+                # This is what it is all about
+                exec_command(
+                    command,
+                    environ=environ,
+                    dry_run=dry_run,
+                    shell=True,
+                    cont_output=True,
                 )
 
-        else:
-            log.info("Output directory does not exist so it cannot be removed")
-
-        # Report errors and warnings at the end of the log so they can be easily seen.
-        if len(warnings) > 0:
-            msg = "Previous warnings:\n"
-            for warn in warnings:
-                msg += "  Warning: " + str(warn) + "\n"
-            log.info(msg)
-
-        if len(errors) > 0:
-            msg = "Previous errors:\n"
-            for err in errors:
-                if str(type(err)).split("'")[1] == "str":
-                    # show string
-                    msg += "  Error msg: " + str(err) + "\n"
-                else:  # show type (of error) and error message
-                    err_type = str(type(err)).split("'")[1]
-                    msg += f"  {err_type}: {str(err)}\n"
-            log.info(msg)
+        except RuntimeError as exc:
             return_code = 1
+            errors.append(exc)
+            log.critical(exc)
+            log.exception("Unable to execute command.")
+
+    # Save time, etc. resources used in metadata on analysis
+    if Path("time_output.txt").exists():  # some tests won't have this file
+        metadata = {
+            "analysis": {"info": {"resources used": {},},},
+        }
+        with open("time_output.txt") as file:
+            for line in file:
+                if ":" in line:
+                    if (
+                        "Elapsed" in line
+                    ):  # special case "Elapsed (wall clock) time (h:mm:ss or m:ss): 0:08.11"
+                        sline = re.split(r"\):", line)
+                        sline[0] += ")"
+                    else:
+                        sline = line.split(":")
+                    key = sline[0].strip()
+                    val = sline[1].strip(' "\n')
+                    metadata["analysis"]["info"]["resources used"][key] = val
+        with open(f"{output_dir}/.metadata.json", "w") as fff:
+            json.dump(metadata, fff)
+            log.info(f"Wrote {output_dir}/.metadata.json")
+
+    # Cleanup, move all results to the output directory
+
+    # Remove all fsaverage* directories
+    if not config.get("gear-keep-fsaverage"):
+        path = output_analysis_id_dir / "freesurfer"
+        fsavg_dirs = path.glob("fsaverage*")
+        for fsavg in fsavg_dirs:
+            log.info("deleting %s", str(fsavg))
+            shutil.rmtree(fsavg)
+    else:
+        log.info("Keeping fsaverage directories")
+
+    # zip entire output/<analysis_id> folder into
+    #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
+    zip_file_name = gear_name + f"_{run_label}_{destination_id}.zip"
+    zip_output(
+        str(output_dir),
+        destination_id,
+        zip_file_name,
+        dry_run=False,
+        exclude_files=None,
+    )
+
+    # Make archives for result *.html files for easy display on platform
+    zip_htmls(output_dir, destination_id, output_analysis_id_dir / BIDS_APP)
+
+    # possibly save ALL intermediate output
+    if config.get("gear-save-intermediate-output"):
+        zip_all_intermediate_output(
+            destination_id, gear_name, output_dir, work_dir, run_label
+        )
+
+    # possibly save intermediate files and folders
+    zip_intermediate_selected(
+        config.get("gear-intermediate-files"),
+        config.get("gear-intermediate-folders"),
+        destination_id,
+        gear_name,
+        output_dir,
+        work_dir,
+        run_label,
+    )
+
+    # clean up: remove output that was zipped
+    if Path(output_analysis_id_dir).exists():
+        if not config.get("gear-keep-output"):
+
+            log.debug('removing output directory "%s"', str(output_analysis_id_dir))
+            shutil.rmtree(output_analysis_id_dir)
+
+        else:
+            log.info('NOT removing output directory "%s"', str(output_analysis_id_dir))
+
+    else:
+        log.info("Output directory does not exist so it cannot be removed")
+
+    # Report errors and warnings at the end of the log so they can be easily seen.
+    if len(warnings) > 0:
+        msg = "Previous warnings:\n"
+        for warn in warnings:
+            msg += "  Warning: " + str(warn) + "\n"
+        log.info(msg)
+
+    if len(errors) > 0:
+        msg = "Previous errors:\n"
+        for err in errors:
+            if str(type(err)).split("'")[1] == "str":
+                # show string
+                msg += "  Error msg: " + str(err) + "\n"
+            else:  # show type (of error) and error message
+                err_type = str(type(err)).split("'")[1]
+                msg += f"  {err_type}: {str(err)}\n"
+        log.info(msg)
+        return_code = 1
+
+    if num_tries == 1:
+        log.info("Happily, fMRIPrep worked on the first try.")
+    else:
+        msg = (
+            "first try but it did on the second"
+            if return_code == 0
+            else "first or second try"
+        )
+        log.info("Sadly, fMRIPrep did not work on the %s.", msg)
 
     log.info("%s Gear is done.  Returning %s", CONTAINER, return_code)
 

@@ -52,3 +52,6 @@ def test_fake_data_killed(
 
         # assert toml_info["execution"]["templateflow_home"] == str(FWV0 / "templateflow")
         assert search_caplog(caplog, "Unable to execute command")
+        assert search_caplog(
+            caplog, "Sadly, fMRIPrep did not work on the first or second try"
+        )

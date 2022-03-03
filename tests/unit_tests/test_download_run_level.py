@@ -103,7 +103,7 @@ class Acquisition:
         self.label = "TheAcquisitionLabel"
 
 
-def test_download_bids_for_runlevel_acquisition_works(tmp_path, caplog):
+def test_download_bids_for_runlevel_acquisition_works(tmp_path, search_caplog, caplog):
 
     caplog.set_level(logging.DEBUG)
 
@@ -137,8 +137,7 @@ def test_download_bids_for_runlevel_acquisition_works(tmp_path, caplog):
                     dry_run=False,
                 )
 
-    assert len(caplog.records) == 10
-    assert "Downloading BIDS data was successful" in caplog.records[9].message
+    assert search_caplog(caplog, "Downloading BIDS data was successful")
 
 
 def test_download_bids_for_runlevel_no_destination_complains(tmp_path, caplog):
@@ -171,7 +170,6 @@ def test_download_bids_for_runlevel_no_destination_complains(tmp_path, caplog):
                     dry_run=True,
                 )
 
-    assert len(caplog.records) == 2
     assert "Destination does not exist" in caplog.records[0].message
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
