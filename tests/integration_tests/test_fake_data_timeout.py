@@ -30,7 +30,13 @@ def test_fake_data_killed(
 
     with flywheel_gear_toolkit.GearToolkitContext(input_args=[]) as gtk_context:
 
+        Path("/home/fmriprep/.cache/templateflow/").chmod(0o555)
+
         status = run.main(gtk_context)
+
+        assert Path(
+            "/flywheel/v0/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-02_label-WM_probseg.nii.gz"
+        ).exists()
 
         toml_file = list(FWV0.glob("work/*/config.toml"))[0]
         assert toml_file.exists()

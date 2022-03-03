@@ -236,6 +236,11 @@ def main(gtk_context):
     templateflow_dir.mkdir()
     environ["SINGULARITYENV_TEMPLATEFLOW_HOME"] = str(templateflow_dir)
     environ["TEMPLATEFLOW_HOME"] = str(templateflow_dir)
+    orig = Path("/home/fmriprep/.cache/templateflow/")
+    # Fill writable templateflow directory with existing templates so they don't have to be downloaded
+    templates = list(orig.glob("*"))
+    for tt in templates:
+        (templateflow_dir / tt.name).symlink_to(tt)
 
     command = generate_command(
         config, work_dir, output_analysis_id_dir, errors, warnings
