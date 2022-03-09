@@ -36,7 +36,16 @@ def test_fake_data_killed(
 
         assert Path(
             "/flywheel/v0/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-02_label-WM_probseg.nii.gz"
-        ).exists()
+        ).is_file()
+
+        assert (
+            Path(
+                "/flywheel/v0/templateflow/tpl-OASIS30ANTs/tpl-OASIS30ANTs_res-01_label-WM_probseg.nii.gz"
+            )
+            .stat()
+            .st_size
+            != 0
+        )
 
         toml_file = list(FWV0.glob("work/*/config.toml"))[0]
         assert toml_file.exists()

@@ -240,7 +240,8 @@ def main(gtk_context):
     # Fill writable templateflow directory with existing templates so they don't have to be downloaded
     templates = list(orig.glob("*"))
     for tt in templates:
-        (templateflow_dir / tt.name).symlink_to(tt)
+        # (templateflow_dir / tt.name).symlink_to(tt)
+        shutil.copytree(tt, templateflow_dir / tt.name)
 
     command = generate_command(
         config, work_dir, output_analysis_id_dir, errors, warnings
@@ -270,10 +271,6 @@ def main(gtk_context):
         log.info("Did not download BIDS because of previous errors")
         print(errors)
 
-    if config["gear-log-level"] != "INFO":
-        # show what's in the current working directory just before running
-        os.system("tree -al .")
-
     return_code = 0
     num_tries = 0
 
@@ -301,6 +298,10 @@ def main(gtk_context):
 
                 if "gear-timeout" in config:
                     command = [f"timeout {config['gear-timeout']}"] + command
+
+                if config["gear-log-level"] != "INFO":
+                    # show what's in the current working directory just before running
+                    os.system("tree -alh .")
 
                 # This is what it is all about
                 exec_command(
@@ -340,6 +341,11 @@ def main(gtk_context):
             log.info(f"Wrote {output_dir}/.metadata.json")
 
     # Cleanup, move all results to the output directory
+
+    if return_code != 0:
+        os.system("echo ")
+        os.system("echo Disk Information on Failure")
+        os.system("df -h")
 
     # Remove all fsaverage* directories
     if not config.get("gear-keep-fsaverage"):
