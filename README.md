@@ -51,6 +51,9 @@ to provide the license to this gear.  A license is required for this gear to run
 ### fs-subjects-dir (optional)
 Zip file of existing FreeSurfer subject's directory to reuse.  If the output of FreeSurfer recon-all is provided to fMRIPrep, that output will be used rather than re-running recon-all.  Unzipping the file should produce a particular subject's directory which will be placed in the $FREESURFER_HOME/subjects directory.  The name of the directory must match the -subjid as passed to recon-all.  This version of fMRIPrep uses Freesurfer v6.0.1.
 
+### previous-results (optional)
+Provide previously calculated fMRIPrep output results zip file as in input.  This file will be unzipped into the output directory so that previous results will be used instead of re-calculating them.  This input is provided so that bids-fmriprep can be run incrementally as new data is acquired.
+
 ### work-dir (optional)
 THIS IS A FUTURE OPTIONAL INPUT.  It has not yet been added.  Provide intermediate fMRIPrep results as a zip file.  This file will be unzipped into the work directory so that previous results will be used instead of re-calculating them.  This option is provided so that bids-fmriprep can be run incrementally as new data is acquired.  The zip file to provide can be produced by using the gear-save-intermediate-output configuration option.  You definitely also want to use the fs-subject-dir input (above) so that FreeSurfer won't be run multiple times.
 

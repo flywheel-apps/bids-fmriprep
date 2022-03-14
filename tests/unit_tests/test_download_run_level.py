@@ -103,7 +103,7 @@ class Acquisition:
         self.label = "TheAcquisitionLabel"
 
 
-def test_download_bids_for_runlevel_acquisition_works(tmp_path, caplog):
+def test_download_bids_for_runlevel_acquisition_works(tmp_path, search_caplog, caplog):
 
     caplog.set_level(logging.DEBUG)
 
@@ -137,8 +137,7 @@ def test_download_bids_for_runlevel_acquisition_works(tmp_path, caplog):
                     dry_run=False,
                 )
 
-    assert len(caplog.records) == 9
-    assert "Downloading BIDS data was successful" in caplog.records[8].message
+    assert search_caplog(caplog, "Downloading BIDS data was successful")
 
 
 def test_download_bids_for_runlevel_no_destination_complains(tmp_path, caplog):
@@ -171,14 +170,15 @@ def test_download_bids_for_runlevel_no_destination_complains(tmp_path, caplog):
                     dry_run=True,
                 )
 
-    assert len(caplog.records) == 2
     assert "Destination does not exist" in caplog.records[0].message
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
     HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
-def test_download_bids_for_runlevel_bad_destination_noted(tmp_path, caplog):
+def test_download_bids_for_runlevel_bad_destination_noted(
+    tmp_path, caplog, search_caplog
+):
 
     caplog.set_level(logging.DEBUG)
 
@@ -218,15 +218,16 @@ def test_download_bids_for_runlevel_bad_destination_noted(tmp_path, caplog):
                     dry_run=True,
                 )
 
-    assert len(caplog.records) == 9
-    assert "is not an analysis or acquisition" in caplog.records[0].message
-    assert 'subject "TheSubjectCode"' in caplog.records[4].message
+    assert search_caplog(caplog, "is not an analysis or acquisition")
+    assert search_caplog(caplog, 'subject "TheSubjectCode"')
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
     HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
-def test_download_bids_for_runlevel_unknown_acquisition_detected(tmp_path, caplog):
+def test_download_bids_for_runlevel_unknown_acquisition_detected(
+    tmp_path, caplog, search_caplog
+):
 
     caplog.set_level(logging.DEBUG)
 
@@ -266,11 +267,10 @@ def test_download_bids_for_runlevel_unknown_acquisition_detected(tmp_path, caplo
                     dry_run=True,
                 )
 
-    assert len(caplog.records) == 5
-    assert 'acquisition "unknown acquisition"' in caplog.records[3].message
+    assert search_caplog(caplog, 'acquisition "unknown acquisition"')
 
 
-def test_download_bids_for_runlevel_session_works(tmp_path, caplog):
+def test_download_bids_for_runlevel_session_works(tmp_path, caplog, search_caplog):
 
     caplog.set_level(logging.DEBUG)
 
@@ -310,14 +310,15 @@ def test_download_bids_for_runlevel_session_works(tmp_path, caplog):
                     dry_run=True,
                 )
 
-    assert len(caplog.records) == 8
-    assert 'session "TheSessionLabel"' in caplog.records[3].message
+    assert search_caplog(caplog, 'session "TheSessionLabel"')
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
     HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
-def test_download_bids_for_runlevel_acquisition_exception_detected(tmp_path, caplog):
+def test_download_bids_for_runlevel_acquisition_exception_detected(
+    tmp_path, caplog, search_caplog
+):
 
     caplog.set_level(logging.DEBUG)
 
@@ -348,11 +349,10 @@ def test_download_bids_for_runlevel_acquisition_exception_detected(tmp_path, cap
                     dry_run=True,
                 )
 
-    assert len(caplog.records) == 6
-    assert "(foo) Reason: fum" in caplog.records[4].message
+    assert search_caplog(caplog, "(foo) Reason: fum")
 
 
-def test_download_bids_for_runlevel_unknown_detected(tmp_path, caplog):
+def test_download_bids_for_runlevel_unknown_detected(tmp_path, caplog, search_caplog):
 
     caplog.set_level(logging.DEBUG)
 
@@ -386,15 +386,14 @@ def test_download_bids_for_runlevel_unknown_detected(tmp_path, caplog):
                 dry_run=True,
             )
 
-    assert len(caplog.records) == 5
-    assert "run_level = who knows" in caplog.records[3].message
+    assert search_caplog(caplog, "run_level = who knows")
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
     HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
 def test_download_bids_for_runlevel_bidsexporterror_exception_detected(
-    tmp_path, caplog
+    tmp_path, caplog, search_caplog
 ):
 
     caplog.set_level(logging.DEBUG)
@@ -426,11 +425,12 @@ def test_download_bids_for_runlevel_bidsexporterror_exception_detected(
                     dry_run=True,
                 )
 
-    assert len(caplog.records) == 6
-    assert "crash" in caplog.records[4].message
+    assert search_caplog(caplog, "crash")
 
 
-def test_download_bids_for_runlevel_validate_exception_detected(tmp_path, caplog):
+def test_download_bids_for_runlevel_validate_exception_detected(
+    tmp_path, caplog, search_caplog
+):
 
     caplog.set_level(logging.DEBUG)
 
@@ -470,14 +470,15 @@ def test_download_bids_for_runlevel_validate_exception_detected(tmp_path, caplog
                     dry_run=True,
                 )
 
-    assert len(caplog.records) == 9
-    assert "('except', 'what')" in caplog.records[7].message
+    assert search_caplog(caplog, "('except', 'what')")
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
     HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
 
 
-def test_download_bids_for_runlevel_nothing_downloaded_detected(tmp_path, caplog):
+def test_download_bids_for_runlevel_nothing_downloaded_detected(
+    tmp_path, caplog, search_caplog
+):
 
     caplog.set_level(logging.DEBUG)
 
@@ -506,13 +507,7 @@ def test_download_bids_for_runlevel_nothing_downloaded_detected(tmp_path, caplog
                 dry_run=True,
             )
 
-    assert len(caplog.records) == 6
-    assert "No BIDS data was found" in caplog.records[4].message
+    assert search_caplog(caplog, "No BIDS data was found")
 
     HIERARCHY["run_level"] = "acquisition"  # fix what was broke
     HIERARCHY["run_label"] = HIERARCHY[f"{HIERARCHY['run_level']}_label"]
-
-
-if __name__ == "__main__":
-
-    test_download_bids_for_runlevel_project_works("/tmp", None)
