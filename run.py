@@ -313,10 +313,15 @@ def main(gtk_context):
                 )
 
         except RuntimeError as exc:
-            return_code = 1
+            if num_tries == 2:
+                return_code = 1
             errors.append(exc)
             log.critical(exc)
             log.exception("Unable to execute command.")
+
+            os.system("echo ")
+            os.system("echo Disk Information on Failure")
+            os.system("df -h")
 
     # Save time, etc. resources used in metadata on analysis
     if Path("time_output.txt").exists():  # some tests won't have this file
@@ -341,11 +346,6 @@ def main(gtk_context):
             log.info(f"Wrote {output_dir}/.metadata.json")
 
     # Cleanup, move all results to the output directory
-
-    if return_code != 0:
-        os.system("echo ")
-        os.system("echo Disk Information on Failure")
-        os.system("df -h")
 
     # Remove all fsaverage* directories
     if not config.get("gear-keep-fsaverage"):
