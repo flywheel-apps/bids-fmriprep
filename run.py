@@ -85,6 +85,7 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
     skip_pattern = re.compile("gear-|lsf-|singularity-")
 
     command_parameters = {}
+    log_to_file = False
     for key, val in config.items():
 
         # these arguments are passed directly to the command as is
@@ -92,6 +93,10 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
             bids_app_args = val.split(" ")
             for baa in bids_app_args:
                 cmd.append(baa)
+
+        elif key == "gear-log-to-file":
+            if val:
+                log_to_file = True
 
         elif not skip_pattern.match(key):
             command_parameters[key] = val
@@ -102,6 +107,9 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
     # print("command_parameters:", json.dumps(command_parameters, indent=4))
 
     cmd = build_command_list(cmd, command_parameters)
+
+    if log_to_file:
+        cmd = cmd + [">", "output/log.txt"]
 
     for ii, cc in enumerate(cmd):
         if cc.startswith("--verbose"):
@@ -311,6 +319,7 @@ def main(gtk_context):
                     shell=True,
                     cont_output=True,
                 )
+                break
 
         except RuntimeError as exc:
             if num_tries == 2:

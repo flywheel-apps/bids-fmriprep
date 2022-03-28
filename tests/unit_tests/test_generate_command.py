@@ -55,3 +55,33 @@ def test_generate_command_missing_config_works(
     assert "lsf-ram" not in command
     assert "singularity-debug" not in command
     assert search_stdout_contains(captured, "command is:", "out/###")
+
+
+def test_generate_command_log_to_file_works(
+    capfd, print_captured, search_stdout_contains
+):
+
+    with flywheel_gear_toolkit.GearToolkitContext(input_args=[]) as gtk_context:
+        gtk_context.init_logging("info")
+        gtk_context.log_config()
+        log = gtk_context.log
+
+        config = {
+            "gear-abort-on-bids-error": False,
+            "gear-log-level": "INFO",
+            "gear-log-to-file": True,
+            "gear-run-bids-validation": False,
+            "gear-save-intermediate-output": False,
+            "gear-dry-run": True,
+            "gear-keep-output": False,
+        }
+
+        errors = []
+        warnings = []
+
+        command = generate_command(
+            config, Path("work"), Path("out/###"), errors, warnings
+        )
+
+    assert command[-2] == ">"
+    assert command[-1] == "output/log.txt"

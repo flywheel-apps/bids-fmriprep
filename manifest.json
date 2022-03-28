@@ -112,6 +112,11 @@
       "description": "Text from license file generated during FreeSurfer registration. *Entries should be space separated*",
       "type": "string"
     },
+    "gear-continuous-output": {
+      "default": true,
+      "description": "Continuously ",
+      "type": "boolean"
+    },
     "gear-dry-run": {
       "default": false,
       "description": "Do everything except actually executing the command line",
@@ -145,6 +150,11 @@
         "DEBUG"
       ],
       "type": "string"
+    },
+    "gear-log-to-file": {
+      "default": false,
+      "description": "Instead of logging in real time, save log output of fMRIPrep to the file output/log.txt",
+      "type": "boolean"
     },
     "gear-run-bids-validation": {
       "default": false,
@@ -308,13 +318,13 @@
     }
   },
   "custom": {
-    "docker-image": "flywheel/bids-fmriprep:1.2.9_20.2.6",
+    "docker-image": "flywheel/bids-fmriprep:1.2.10_20.2.6",
     "flywheel": {
       "suite": "BIDS Apps"
     },
     "gear-builder": {
       "category": "analysis",
-      "image": "flywheel/bids-fmriprep:1.2.9_20.2.6"
+      "image": "flywheel/bids-fmriprep:1.2.10_20.2.6"
     },
     "license": {
       "dependencies": [
@@ -388,5 +398,5 @@
   "name": "bids-fmriprep",
   "source": "https://github.com/nipreps/fmriprep",
   "url": "https://github.com/flywheel-apps/bids-fmriprep/blob/master/README.md",
-  "version": "1.2.9_20.2.6"
+  "version": "1.2.10_20.2.6"
 }
