@@ -35,7 +35,7 @@ def test_log_to_file_works(
         status = run.main(gtk_context)
 
         assert status == 1
-        log_path = Path("/flywheel/v0/output/log.txt")
+        log_path = Path("/flywheel/v0/output/log2.txt")
         assert log_path.exists()
         found_it = False
         with open(log_path, "r") as ff:
@@ -44,3 +44,4 @@ def test_log_to_file_works(
                     found_it = True
                     break
         assert found_it
+        assert 0

@@ -94,10 +94,6 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
             for baa in bids_app_args:
                 cmd.append(baa)
 
-        elif key == "gear-log-to-file":
-            if val:
-                log_to_file = True
-
         elif not skip_pattern.match(key):
             command_parameters[key] = val
 
@@ -107,9 +103,6 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
     # print("command_parameters:", json.dumps(command_parameters, indent=4))
 
     cmd = build_command_list(cmd, command_parameters)
-
-    if log_to_file:
-        cmd = cmd + [">", "output/log.txt"]
 
     for ii, cc in enumerate(cmd):
         if cc.startswith("--verbose"):
@@ -311,6 +304,12 @@ def main(gtk_context):
                     # show what's in the current working directory just before running
                     os.system("tree -alh .")
 
+                if config.get("gear-log-to-file"):
+                    if command[-1] == "output/log1.txt":
+                        command[-1] = "output/log2.txt"
+                    else:
+                        command = command + [">", "output/log1.txt"]
+
                 # This is what it is all about
                 exec_command(
                     command,
@@ -427,7 +426,6 @@ def main(gtk_context):
                 err_type = str(type(err)).split("'")[1]
                 msg += f"  {err_type}: {str(err)}\n"
         log.info(msg)
-        return_code = 1
 
     if num_tries == 1:
         log.info("Happily, fMRIPrep worked on the first try.")

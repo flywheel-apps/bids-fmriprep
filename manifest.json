@@ -153,7 +153,7 @@
     },
     "gear-log-to-file": {
       "default": false,
-      "description": "Instead of logging in real time, save log output of fMRIPrep to the file output/log.txt",
+      "description": "Instead of logging in real time, save log output of fMRIPrep to the file output/log#.txt (where # is 1 or 2 depending on how many times fMRIPrep was run.",
       "type": "boolean"
     },
     "gear-run-bids-validation": {
@@ -318,13 +318,13 @@
     }
   },
   "custom": {
-    "docker-image": "flywheel/bids-fmriprep:1.2.10_20.2.6",
+    "docker-image": "flywheel/bids-fmriprep:1.2.13_20.2.6",
     "flywheel": {
       "suite": "BIDS Apps"
     },
     "gear-builder": {
       "category": "analysis",
-      "image": "flywheel/bids-fmriprep:1.2.10_20.2.6"
+      "image": "flywheel/bids-fmriprep:1.2.13_20.2.6"
     },
     "license": {
       "dependencies": [
@@ -398,5 +398,5 @@
   "name": "bids-fmriprep",
   "source": "https://github.com/nipreps/fmriprep",
   "url": "https://github.com/flywheel-apps/bids-fmriprep/blob/master/README.md",
-  "version": "1.2.10_20.2.6"
+  "version": "1.2.13_20.2.6"
 }
