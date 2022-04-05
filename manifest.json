@@ -112,11 +112,6 @@
       "description": "Text from license file generated during FreeSurfer registration. *Entries should be space separated*",
       "type": "string"
     },
-    "gear-continuous-output": {
-      "default": true,
-      "description": "Continuously ",
-      "type": "boolean"
-    },
     "gear-dry-run": {
       "default": false,
       "description": "Do everything except actually executing the command line",
