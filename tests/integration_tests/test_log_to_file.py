@@ -44,4 +44,3 @@ def test_log_to_file_works(
                     found_it = True
                     break
         assert found_it
-        assert 0
