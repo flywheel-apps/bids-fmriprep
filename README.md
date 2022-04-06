@@ -151,3 +151,16 @@ Depending upon your fMRIPrep workflow preferences, a variety of metadata and fil
 #### Functional ([BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#task-including-resting-state-imaging-data))
 
 - Each functional NIfTI needs the following metadata: `EchoTime`, `EffectiveEchoSpacing`, `PhaseEncodingDirection`,`RepetitionTime`, `SliceTiming`, and `TaskName`.
+
+
+## Dev notes
+The following command line options are deliberately omitted, 
+as they are either handled internally or cannot be implemented.
+
+--anat-derivatives
+--bids-database-dir
+--low-mem
+--use-plugin
+--fs-license-file
+--work-dir
+--clean-workdir

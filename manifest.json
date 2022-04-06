@@ -38,9 +38,13 @@
       "type": "string"
     },
     "cifti-output": {
-      "default": false,
-      "description": "output BOLD files as CIFTI dtseries",
-      "type": "boolean"
+      "description": "output preprocessed BOLD as a CIFTI dense timeseries. Optionally, the number of grayordinate can be specified (default is 91k, which equates to 2mm resolution)\nPossible choices: 91k, 170k",
+      "enum": [
+        "91k",
+        "170k"
+      ],
+      "type": "string",
+      "optional": true
     },
     "debug": {
       "default": "",
@@ -181,6 +185,11 @@
       "description": "[LSF] How much RAM to request. This is used for the underlying '-R' option.",
       "type": "string"
     },
+    "me-output-echos": {
+      "default": false,
+      "description": "Output individual echo time series with slice, motion and susceptibility correction. Useful for further Tedana processing post-fMRIPrep.",
+      "type": "boolean"
+    },
     "md-only-boilerplate": {
       "default": false,
       "description": "skip generation of HTML and LaTeX formatted citation with pandoc",
@@ -198,7 +207,7 @@
     },
     "n_cpus": {
       "default": 0,
-      "description": "Maximum number of threads across all processes. Default is all available.",
+      "description": "Maximum number of threads across all processes (nprocs). Default is all available.",
       "type": "integer"
     },
     "no-submm-recon": {
@@ -216,10 +225,24 @@
       "description": "Maximum number of threads per-process.  Default is all available.",
       "type": "integer"
     },
+    "output-layout": {
+    "default": "bids",
+    "description": "Organization of outputs. bids (default) places fMRIPrep derivatives directly in the output directory, and defaults to placing FreeSurfer derivatives in <output-dir>/sourcedata/freesurfer. legacy creates derivative datasets as subdirectories of outputs.",
+    "enum": [
+      "bids",
+      "legacy"
+    ]
+    },
+      "type": "string",
     "output-spaces": {
       "default": "MNI152NLin2009cAsym",
       "description": "Standard and non-standard spaces to resample anatomical and functional images to. Standard spaces may be specified by the form <TEMPLATE>[:res-<resolution>][:cohort-<label>][...], where <TEMPLATE> is a keyword (valid keywords: “MNI152Lin”, “MNI152NLin2009cAsym”, “MNI152NLin6Asym”, “MNI152NLin6Sym”, “MNIInfant”, “MNIPediatricAsym”, “NKI”, “OASIS30ANTs”, “PNC”, “fsLR”, “fsaverage”) or path pointing to a user-supplied template, and may be followed by optional, colon-separated parameters. Non-standard spaces (valid keywords: anat, T1w, run, func, sbref, fsnative) imply specific orientations and sampling grids. Important to note, the res-* modifier does not define the resolution used for the spatial normalization. For further details, please check out https://fmriprep.readthedocs.io/en/stable/spaces.html",
       "type": "string"
+    },
+    "random-seed": {
+      "description": "Initialize the random seed for the workflow",
+      "type": "string",
+      "optional": true
     },
     "reports-only": {
       "default": false,
@@ -270,6 +293,16 @@
       ],
       "type": "string"
     },
+    "slice-time-ref": {
+      "default": 0.5,
+      "description": "The time of the reference slice to correct BOLD values to, as a fraction acquisition time. 0 indicates the start, 0.5 the midpoint, and 1 the end of acquisition. The alias start corresponds to 0, and middle to 0.5. The default value is 0.5.",
+      "type": "number"
+    },
+    "sloppy": {
+      "optional": true,
+      "type": "boolean",
+      "description": "Use low-quality tools for speed - TESTING ONLY"
+    },
     "stop-on-first-crash": {
       "default": false,
       "description": "Force stopping on first crash, even if a work directory was specified",
@@ -279,6 +312,11 @@
       "default": "",
       "description": "select a specific task to be processed",
       "type": "string"
+    },
+    "topup-max-vols": {
+      "description": "maximum number of volumes to use with TOPUP, per-series (EPI or BOLD)",
+      "type": "integer",
+      "optional": true
     },
     "use-aroma": {
       "default": false,
@@ -357,6 +395,13 @@
       "description": "A .bidsignore file to provide to the bids-validator that this gear runs before running the main command.",
       "optional": true
     },
+
+    "config-file": {
+      "base": "file",
+      "description": "Use pre-generated configuration file. Values in file will be overridden by command-line arguments.",
+      "optional": true
+    },
+
     "bids-filter-file": {
       "base": "file",
       "description": "a JSON file describing custom BIDS input filters using PyBIDS.",
