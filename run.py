@@ -445,8 +445,11 @@ def main(gtk_context):
 if __name__ == "__main__":
 
     # make sure /flywheel/v0 is writable, use a scratch directory if not
-    scratch_dir = run_in_tmp_dir(gtk_context.config["gear-writable-dir"])
+    with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
+        scratch_dir = run_in_tmp_dir(gtk_context.config["gear-writable-dir"])
 
+    # Has to be instantiated twice here, since parent directories might have
+    # changed
     with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
         return_code = main(gtk_context)
 
