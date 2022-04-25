@@ -444,21 +444,20 @@ def main(gtk_context):
 
 if __name__ == "__main__":
 
+    # make sure /flywheel/v0 is writable, use a scratch directory if not
+    scratch_dir = run_in_tmp_dir(gtk_context.config["gear-writable-dir"])
+
     with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
-
-        # make sure /flywheel/v0 is writable, use a scratch directory if not
-        scratch_dir = run_in_tmp_dir(gtk_context.config["gear-writable-dir"])
-
         return_code = main(gtk_context)
 
-        # clean up (might be necessary when running in a shared computing environment)
-        if scratch_dir:
-            log.debug("Removing scratch directory")
-            for thing in scratch_dir.glob("*"):
-                if thing.is_symlink():
-                    thing.unlink()  # don't remove anything links point to
-                    log.debug("unlinked %s", thing.name)
-            shutil.rmtree(scratch_dir)
-            log.debug("Removed %s", scratch_dir)
+    # clean up (might be necessary when running in a shared computing environment)
+    if scratch_dir:
+        log.debug("Removing scratch directory")
+        for thing in scratch_dir.glob("*"):
+            if thing.is_symlink():
+                thing.unlink()  # don't remove anything links point to
+                log.debug("unlinked %s", thing.name)
+        shutil.rmtree(scratch_dir)
+        log.debug("Removed %s", scratch_dir)
 
     sys.exit(return_code)
