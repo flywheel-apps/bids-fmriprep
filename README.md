@@ -154,7 +154,7 @@ Depending upon your fMRIPrep workflow preferences, a variety of metadata and fil
 
 
 ## Dev notes
-The following command line options are deliberately omitted, 
+The following command line options are deliberately omitted,
 as they are either handled internally or cannot be implemented.
 
 --anat-derivatives

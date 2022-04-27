@@ -6,17 +6,17 @@
         "anat-only": {
             "default": false,
             "description": "run anatomical workflows only",
-            "type": "boolean",
+            "type": "boolean"
         },
         "aroma-melodic-dimensionality": {
             "default": -200,
             "description": "Exact or maximum number of MELODIC components to estimate (positive = exact, negative = maximum",
-            "type": "integer",
+            "type": "integer"
         },
         "boilerplate_only": {
             "default": false,
             "description": "generate boilerplate only",
-            "type": "boolean",
+            "type": "boolean"
         },
         "bold2t1w-dof": {
             "default": 6,
