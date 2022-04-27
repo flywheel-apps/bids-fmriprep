@@ -216,6 +216,11 @@ def main(gtk_context):
             log.info("Found %s", a_dir.name)
             a_dir.rename(output_analysis_id_dir / a_dir.name)
 
+    config_file = gtk_context.get_input_path("config-file")
+    if config_file:
+        config['config-file'] = config_file
+
+
     environ["FS_LICENSE"] = str(FWV0 / "freesurfer/license.txt")
 
     license_list = list(Path("input/freesurfer_license").glob("*"))
