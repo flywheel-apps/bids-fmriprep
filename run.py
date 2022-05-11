@@ -85,6 +85,7 @@ def generate_command(config, work_dir, output_analysis_id_dir, errors, warnings)
     skip_pattern = re.compile("gear-|lsf-|singularity-")
 
     command_parameters = {}
+    log_to_file = False
     for key, val in config.items():
 
         # these arguments are passed directly to the command as is
@@ -303,6 +304,12 @@ def main(gtk_context):
                     # show what's in the current working directory just before running
                     os.system("tree -alh .")
 
+                if config.get("gear-log-to-file"):
+                    if command[-1] == "output/log1.txt":
+                        command[-1] = "output/log2.txt"
+                    else:
+                        command = command + [">", "output/log1.txt"]
+
                 # This is what it is all about
                 exec_command(
                     command,
@@ -311,12 +318,18 @@ def main(gtk_context):
                     shell=True,
                     cont_output=True,
                 )
+                break
 
         except RuntimeError as exc:
-            return_code = 1
+            if num_tries == 2:
+                return_code = 1
             errors.append(exc)
             log.critical(exc)
             log.exception("Unable to execute command.")
+
+            os.system("echo ")
+            os.system("echo Disk Information on Failure")
+            os.system("df -h")
 
     # Save time, etc. resources used in metadata on analysis
     if Path("time_output.txt").exists():  # some tests won't have this file
@@ -341,11 +354,6 @@ def main(gtk_context):
             log.info(f"Wrote {output_dir}/.metadata.json")
 
     # Cleanup, move all results to the output directory
-
-    if return_code != 0:
-        os.system("echo ")
-        os.system("echo Disk Information on Failure")
-        os.system("df -h")
 
     # Remove all fsaverage* directories
     if not config.get("gear-keep-fsaverage"):
@@ -418,7 +426,6 @@ def main(gtk_context):
                 err_type = str(type(err)).split("'")[1]
                 msg += f"  {err_type}: {str(err)}\n"
         log.info(msg)
-        return_code = 1
 
     if num_tries == 1:
         log.info("Happily, fMRIPrep worked on the first try.")
@@ -437,21 +444,23 @@ def main(gtk_context):
 
 if __name__ == "__main__":
 
+    # make sure /flywheel/v0 is writable, use a scratch directory if not
     with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
-
-        # make sure /flywheel/v0 is writable, use a scratch directory if not
         scratch_dir = run_in_tmp_dir(gtk_context.config["gear-writable-dir"])
 
+    # Has to be instantiated twice here, since parent directories might have
+    # changed
+    with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
         return_code = main(gtk_context)
 
-        # clean up (might be necessary when running in a shared computing environment)
-        if scratch_dir:
-            log.debug("Removing scratch directory")
-            for thing in scratch_dir.glob("*"):
-                if thing.is_symlink():
-                    thing.unlink()  # don't remove anything links point to
-                    log.debug("unlinked %s", thing.name)
-            shutil.rmtree(scratch_dir)
-            log.debug("Removed %s", scratch_dir)
+    # clean up (might be necessary when running in a shared computing environment)
+    if scratch_dir:
+        log.debug("Removing scratch directory")
+        for thing in scratch_dir.glob("*"):
+            if thing.is_symlink():
+                thing.unlink()  # don't remove anything links point to
+                log.debug("unlinked %s", thing.name)
+        shutil.rmtree(scratch_dir)
+        log.debug("Removed %s", scratch_dir)
 
     sys.exit(return_code)
