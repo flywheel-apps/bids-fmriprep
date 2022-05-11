@@ -58,7 +58,7 @@ Provide previously calculated fMRIPrep output results zip file as in input.  Thi
 THIS IS A FUTURE OPTIONAL INPUT.  It has not yet been added.  Provide intermediate fMRIPrep results as a zip file.  This file will be unzipped into the work directory so that previous results will be used instead of re-calculating them.  This option is provided so that bids-fmriprep can be run incrementally as new data is acquired.  The zip file to provide can be produced by using the gear-save-intermediate-output configuration option.  You definitely also want to use the fs-subject-dir input (above) so that FreeSurfer won't be run multiple times.
 
 ## Config:
-Most config options are identical to those used in fmriprep, and so documentation can be found here https://fmriprep.readthedocs.io/en/stable/usage.html.
+Most config options are identical to those used in fmriprep, and so documentation can be found here https://fmriprep.org/en/20.2.6/usage.html.
 
 The following additional arguments control how the gear code behaves.
 Note: arguments that start with "gear-" are not passed to fMRIPrep.
