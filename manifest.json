@@ -1,7 +1,7 @@
 {
   "author": "Poldrack lab, Stanford University",
   "cite": "see https://fmriprep.readthedocs.io/en/stable/citing.html",
-  "command": "python run.py",
+  "command": "poetry run python run.py",
   "config": {
     "anat-only": {
       "default": false,
@@ -203,7 +203,7 @@
     },
     "n_cpus": {
       "default": 0,
-      "description": "Maximum number of threads across all processes. Default is all available.",
+      "description": "Maximum number of threads across all processes (nprocs). Default is all available.",
       "type": "integer"
     },
     "no-submm-recon": {
@@ -313,13 +313,13 @@
     }
   },
   "custom": {
-    "docker-image": "flywheel/bids-fmriprep:1.2.14_20.2.6",
+    "docker-image": "flywheel/bids-fmriprep:1.4.0_20.2.7",
     "flywheel": {
       "suite": "BIDS Apps"
     },
     "gear-builder": {
       "category": "analysis",
-      "image": "flywheel/bids-fmriprep:1.2.14_20.2.6"
+      "image": "flywheel/bids-fmriprep:1.4.0_20.2.7"
     },
     "license": {
       "dependencies": [
@@ -393,5 +393,5 @@
   "name": "bids-fmriprep",
   "source": "https://github.com/nipreps/fmriprep",
   "url": "https://github.com/flywheel-apps/bids-fmriprep/blob/master/README.md",
-  "version": "1.2.14_20.2.6"
+  "version": "1.4.0_20.2.7"
 }

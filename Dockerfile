@@ -1,4 +1,4 @@
-FROM nipreps/fmriprep:20.2.6
+FROM nipreps/fmriprep:20.2.7
 
 LABEL maintainer="support@flywheel.io"
 
@@ -14,7 +14,7 @@ ENV REQUESTS_CA_BUNDLE "/etc/ssl/certs/ca-certificates.crt"
 RUN python -c 'import os, json; f = open("/flywheel/v0/gear_environ.json", "w"); json.dump(dict(os.environ), f)'
 
 RUN apt-get update && \
-    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
     apt-get install -y \
     time \
     zip \
@@ -28,9 +28,12 @@ RUN npm install -g bids-validator@1.8.4 \
 
 # Python 3.7.1 (default, Dec 14 2018, 19:28:38)
 # [GCC 7.3.0] :: Anaconda, Inc. on linux
-COPY requirements.txt /tmp
-RUN pip install -r /tmp/requirements.txt && \
+RUN pip install poetry && \
     rm -rf /root/.cache/pip
+
+
+COPY poetry.lock pyproject.toml $FLYWHEEL/
+RUN poetry install --no-dev
 
 ENV PYTHONUNBUFFERED 1
 
