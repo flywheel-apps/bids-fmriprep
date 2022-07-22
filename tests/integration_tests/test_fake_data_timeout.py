@@ -13,7 +13,11 @@ FWV0 = Path.cwd()
 
 
 def test_fake_data_killed(
-    caplog, capfd, install_gear, search_caplog, print_captured,
+    caplog,
+    capfd,
+    install_gear,
+    search_caplog,
+    print_captured,
 ):
 
     caplog.set_level(logging.DEBUG)

@@ -7,4 +7,4 @@ RUN poetry install
 COPY tests ./tests
 RUN chmod +x ./tests/bin/poetry_test.sh
 
-ENTRYPOINT ["/flywheel/v0/tests/bin/tests.sh"]
+ENTRYPOINT ["/flywheel/v0/tests/bin/poetry_tests.sh"]

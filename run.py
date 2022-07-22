@@ -4,6 +4,9 @@
 import json
 import logging
 import os
+
+os.system("type poetry && type python && type python3")
+
 import re
 import shutil
 import sys
@@ -125,7 +128,7 @@ def main(gtk_context):
 
     gtk_context.log_config()
 
-    # Errors and warnings will be always logged when they are detected.
+    # Errors and warnings will always be logged when they are detected.
     # Keep a list of errors and warning to print all in one place at end of log
     # Any errors will prevent the command from running and will cause exit(1)
     errors = []

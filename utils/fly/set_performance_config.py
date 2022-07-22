@@ -62,7 +62,7 @@ def set_mem_mb(mem_mb):
         mem_mb (float) which will become part of the command line command
     """
 
-    psutil_mem_mb = int(psutil.virtual_memory().available / (1024 ** 2))
+    psutil_mem_mb = int(psutil.virtual_memory().available / (1024**2))
     log.info("psutil.virtual_memory().available= {:5.2f} MiB".format(psutil_mem_mb))
     if mem_mb:
         if mem_mb > psutil_mem_mb:
