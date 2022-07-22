@@ -49,8 +49,8 @@ def run_in_tmp_dir(writable_dir):
 
     try:
         _ = tempfile.mkdtemp(prefix=SCRATCH_NAME, dir=FWV0)
-        os.chdir(FWV0)  # run in /tmp/... directory so it is writeable
-        log.debug("Running in %s", FWV0)
+        os.chdir(FWV0)  # run in usual place which turns out to be writable
+        log.debug("Running at path %s", FWV0)
         return None
     except OSError as e:
         log.debug("Problem writing to %s: %s", FWV0, e.strerror)
@@ -61,12 +61,16 @@ def run_in_tmp_dir(writable_dir):
 
     # Create temporary place to run gear
     WD = tempfile.mkdtemp(prefix=SCRATCH_NAME, dir=writable_dir)
-    log.debug("Gear scratch directory is %s", WD)
-
     new_FWV0 = Path(WD + FWV0)
     new_FWV0.mkdir(parents=True)
+    log.debug("Running at path %s", new_FWV0)
+
     abs_path = Path(".").resolve()
-    names = list(Path(FWV0).glob("*"))
+    if abs_path != FWV0:  # if run by pytest, we're not at the usual location
+        fmriprep_index = abs_path.parts.index("bids-fmriprep")
+        abs_path = abs_path.parents[len(abs_path.parents) - fmriprep_index - 1]
+
+    names = list(abs_path.glob("*"))
     for name in names:
         if name.name == "gear_environ.json":  # always use real one, not dev
             (new_FWV0 / name.name).symlink_to(Path(FWV0) / name.name)

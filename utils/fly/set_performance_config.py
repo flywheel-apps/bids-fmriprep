@@ -21,7 +21,10 @@ def set_n_cpus(n_cpus, omp_nthreads):
         n_cpus (int) which will become part of the command line command
     """
 
-    os_cpu_count = os.cpu_count()
+    try:
+        os_cpu_count = len(os.sched_getaffinity(0))
+    except AttributeError:
+        os_cpu_count = os.cpu_count()
     log.info("os.cpu_count() = %d", os_cpu_count)
     if n_cpus:
         if n_cpus > os_cpu_count:
