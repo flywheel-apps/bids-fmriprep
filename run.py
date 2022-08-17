@@ -4,9 +4,6 @@
 import json
 import logging
 import os
-
-os.system("type poetry && type python && type python3")
-
 import re
 import shutil
 import sys
