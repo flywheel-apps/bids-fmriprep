@@ -431,5 +431,5 @@
     "name": "bids-fmriprep",
     "source": "https://github.com/nipreps/fmriprep",
     "url": "https://github.com/flywheel-apps/bids-fmriprep/blob/master/README.md",
-    "version": "1.4.1_20.2.7rc2"
+    "version": "1.4.1_20.2.7"
 }
