@@ -6,6 +6,7 @@ from flywheel_gear_toolkit.utils.zip_tools import unzip_archive
 
 from utils.singularity import run_in_tmp_dir
 
+origdir = Path.cwd()
 run_in_tmp_dir("/var/tmp")  # run all tests in /tmp/*/flywheel/v0 where * is random
 
 FWV0 = Path.cwd()
@@ -23,9 +24,8 @@ def install_gear():
         """
 
         gear_tests = Path("/src/tests/data/gear_tests/")
-        if not gear_tests.exists():  # fix for running in circleci
-            gear_tests = FWV0 / "tests/data/gear_tests/"
-
+        if not gear_tests.exists():  # fix for running in debugger (poetry and pytest)
+            gear_tests = origdir.parents[0] / "data" / "gear_tests"
         print("\nRemoving previous gear...")
 
         for file_name in [
@@ -52,7 +52,6 @@ def install_gear():
 
         print(f'\ninstalling new gear, "{zip_name}"...')
         unzip_archive(gear_tests / zip_name, str(FWV0))
-
         # The "freesurfer" directory needs to have the standard freesurfer
         # "subjects" directory and "license.txt" file.
 

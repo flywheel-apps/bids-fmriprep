@@ -11,7 +11,11 @@ log = logging.getLogger(__name__)
 
 
 def install_freesurfer_license(
-    input_license_path, freesurfer_license_string, fw, destination_id, fs_license_path,
+    input_license_path,
+    freesurfer_license_string,
+    fw,
+    destination_id,
+    fs_license_path,
 ):
     """Install the Freesurfer license file.
 

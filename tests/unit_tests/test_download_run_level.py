@@ -108,13 +108,15 @@ def test_download_bids_for_runlevel_acquisition_works(tmp_path, search_caplog, c
     caplog.set_level(logging.DEBUG)
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch("utils.bids.download_run_level.download_bids_dir"):
 
             with patch(
-                "utils.bids.download_run_level.validate_bids", return_value=0,
+                "utils.bids.download_run_level.validate_bids",
+                return_value=0,
             ):
 
                 gtk_context = flywheel_gear_toolkit.GearToolkitContext(
@@ -147,13 +149,15 @@ def test_download_bids_for_runlevel_no_destination_complains(tmp_path, caplog):
     HIERARCHY["run_level"] = "no_destination"
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch("utils.bids.download_run_level.download_bids_dir"):
 
             with patch(
-                "utils.bids.download_run_level.validate_bids", return_value=0,
+                "utils.bids.download_run_level.validate_bids",
+                return_value=0,
             ):
 
                 gtk_context = flywheel_gear_toolkit.GearToolkitContext(
@@ -192,7 +196,8 @@ def test_download_bids_for_runlevel_bad_destination_noted(
         json.dump(DATASET_DESCRIPTION, jfp)
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch(
@@ -201,7 +206,8 @@ def test_download_bids_for_runlevel_bad_destination_noted(
         ):
 
             with patch(
-                "utils.bids.download_run_level.validate_bids", return_value=0,
+                "utils.bids.download_run_level.validate_bids",
+                return_value=0,
             ):
 
                 gtk_context = flywheel_gear_toolkit.GearToolkitContext(
@@ -241,7 +247,8 @@ def test_download_bids_for_runlevel_unknown_acquisition_detected(
         json.dump(DATASET_DESCRIPTION, jfp)
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch(
@@ -250,7 +257,8 @@ def test_download_bids_for_runlevel_unknown_acquisition_detected(
         ):
 
             with patch(
-                "utils.bids.download_run_level.validate_bids", return_value=0,
+                "utils.bids.download_run_level.validate_bids",
+                return_value=0,
             ):
 
                 gtk_context = flywheel_gear_toolkit.GearToolkitContext(
@@ -284,7 +292,8 @@ def test_download_bids_for_runlevel_session_works(tmp_path, caplog, search_caplo
         json.dump(DATASET_DESCRIPTION, jfp)
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch(
@@ -293,7 +302,8 @@ def test_download_bids_for_runlevel_session_works(tmp_path, caplog, search_caplo
         ):
 
             with patch(
-                "utils.bids.download_run_level.validate_bids", return_value=0,
+                "utils.bids.download_run_level.validate_bids",
+                return_value=0,
             ):
 
                 gtk_context = flywheel_gear_toolkit.GearToolkitContext(
@@ -323,7 +333,8 @@ def test_download_bids_for_runlevel_acquisition_exception_detected(
     caplog.set_level(logging.DEBUG)
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch(
@@ -332,7 +343,8 @@ def test_download_bids_for_runlevel_acquisition_exception_detected(
         ):
 
             with patch(
-                "utils.bids.download_run_level.validate_bids", return_value=0,
+                "utils.bids.download_run_level.validate_bids",
+                return_value=0,
             ):
 
                 gtk_context = flywheel_gear_toolkit.GearToolkitContext(
@@ -365,11 +377,13 @@ def test_download_bids_for_runlevel_unknown_detected(tmp_path, caplog, search_ca
         json.dump(DATASET_DESCRIPTION, jfp)
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch(
-            "utils.bids.download_run_level.validate_bids", return_value=0,
+            "utils.bids.download_run_level.validate_bids",
+            return_value=0,
         ):
 
             gtk_context = flywheel_gear_toolkit.GearToolkitContext(
@@ -399,7 +413,8 @@ def test_download_bids_for_runlevel_bidsexporterror_exception_detected(
     caplog.set_level(logging.DEBUG)
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch(
@@ -408,7 +423,8 @@ def test_download_bids_for_runlevel_bidsexporterror_exception_detected(
         ):
 
             with patch(
-                "utils.bids.download_run_level.validate_bids", return_value=0,
+                "utils.bids.download_run_level.validate_bids",
+                return_value=0,
             ):
 
                 gtk_context = flywheel_gear_toolkit.GearToolkitContext(
@@ -443,7 +459,8 @@ def test_download_bids_for_runlevel_validate_exception_detected(
         json.dump(DATASET_DESCRIPTION, jfp)
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch(
@@ -485,7 +502,8 @@ def test_download_bids_for_runlevel_nothing_downloaded_detected(
     HIERARCHY["run_level"] = "subject"
 
     with patch(
-        "flywheel_gear_toolkit.GearToolkitContext.client", return_value=Acquisition(),
+        "flywheel_gear_toolkit.GearToolkitContext.client",
+        return_value=Acquisition(),
     ):
 
         with patch(

@@ -21,7 +21,10 @@ def set_n_cpus(n_cpus, omp_nthreads):
         n_cpus (int) which will become part of the command line command
     """
 
-    os_cpu_count = os.cpu_count()
+    try:
+        os_cpu_count = len(os.sched_getaffinity(0))
+    except AttributeError:
+        os_cpu_count = os.cpu_count()
     log.info("os.cpu_count() = %d", os_cpu_count)
     if n_cpus:
         if n_cpus > os_cpu_count:
@@ -62,7 +65,7 @@ def set_mem_mb(mem_mb):
         mem_mb (float) which will become part of the command line command
     """
 
-    psutil_mem_mb = int(psutil.virtual_memory().available / (1024 ** 2))
+    psutil_mem_mb = int(psutil.virtual_memory().available / (1024**2))
     log.info("psutil.virtual_memory().available= {:5.2f} MiB".format(psutil_mem_mb))
     if mem_mb:
         if mem_mb > psutil_mem_mb:
