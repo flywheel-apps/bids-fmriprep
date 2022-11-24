@@ -83,7 +83,7 @@ urllib3 = ">=1.26.4"
 
 [[package]]
 name = "flywheel-gear-toolkit"
-version = "0.1.4"
+version = "0.6.8"
 description = "Tooling for developing Flywheel gears"
 category = "main"
 optional = false
@@ -109,7 +109,7 @@ rfc3987 = ">=1.3.7"
 
 [[package]]
 name = "flywheel-sdk"
-version = "15.1.0"
+version = "16.12.3"
 description = "Flywheel SDK"
 category = "main"
 optional = false
@@ -226,7 +226,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "psutil"
-version = "5.6.7"
+version = "5.9.2"
 description = "Cross-platform lib for process and system monitoring in Python."
 category = "main"
 optional = false

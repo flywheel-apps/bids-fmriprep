@@ -1,16 +1,16 @@
 [tool.poetry]
 name = "bids-fmriprep"
-version = "1.4.0_20.2.7"
+version = "1.5.0+22.0.2"
 description = ""
-authors = ["Flywheel <support@flywheel.io>"]
+authors = ["Iraj Gholami <Iraj.Gholami@nyu.edu>"]
 license = "BSD-3-Clause"
 
 [tool.poetry.dependencies]
-python = "~3.7.1"
-flywheel-sdk = "~15.1.0"
-psutil = "~5.6.3"
-flywheel-gear-toolkit = "~0.1.3"
-flywheel-bids = "~0.9.1"
+python = "~3.9.12"
+flywheel-sdk = "~16.12.3"
+psutil = "~5.9.2"
+flywheel-gear-toolkit = "~0.6.8"
+flywheel-bids = "~0.9.4"
 toml = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
