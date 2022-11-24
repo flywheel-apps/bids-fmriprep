@@ -1,13 +1,13 @@
-FROM nipreps/fmriprep:20.2.7
+FROM nipreps/fmriprep:22.0.2
 
-LABEL maintainer="support@flywheel.io"
+LABEL maintainer="Iraj.Gholami@nyu.edu"
 
 ENV FLYWHEEL /flywheel/v0
 WORKDIR ${FLYWHEEL}
 
 # Remove expired LetsEncrypt cert
-RUN rm /usr/share/ca-certificates/mozilla/DST_Root_CA_X3.crt && \
-    update-ca-certificates
+# RUN rm /usr/share/ca-certificates/mozilla/DST_Root_CA_X3.crt && \
+#    update-ca-certificates
 ENV REQUESTS_CA_BUNDLE "/etc/ssl/certs/ca-certificates.crt"
 
 # Save docker environ here to keep it separate from the Flywheel gear environment
@@ -22,7 +22,7 @@ RUN apt-get update && \
     tree && \
     rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g bids-validator@1.8.4 \
+RUN npm install -g bids-validator@1.9.9 \
     esbuild@0.13.4 \
     esbuild-runner@2.2.1
 
