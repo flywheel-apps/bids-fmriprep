@@ -28,12 +28,8 @@ RUN npm install -g bids-validator@1.8.4 \
 
 # Python 3.7.1 (default, Dec 14 2018, 19:28:38)
 # [GCC 7.3.0] :: Anaconda, Inc. on linux
-RUN pip install poetry && \
-    rm -rf /root/.cache/pip
-
-
-COPY poetry.lock pyproject.toml $FLYWHEEL/
-RUN poetry install --no-dev
+COPY requirements.txt $FLYWHEEL/
+RUN pip install --no-cache-dir -r $FLYWHEEL/requirements.txt
 
 ENV PYTHONUNBUFFERED 1
 

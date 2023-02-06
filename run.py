@@ -123,8 +123,6 @@ def main(gtk_context):
     FWV0 = Path.cwd()
     log.info("Running gear in %s", FWV0)
 
-    gtk_context.log_config()
-
     # Errors and warnings will always be logged when they are detected.
     # Keep a list of errors and warning to print all in one place at end of log
     # Any errors will prevent the command from running and will cause exit(1)
@@ -454,11 +452,13 @@ if __name__ == "__main__":
 
     # make sure /flywheel/v0 is writable, use a scratch directory if not
     with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
+        gtk_context.log_config()
         scratch_dir = run_in_tmp_dir(gtk_context.config["gear-writable-dir"])
 
     # Has to be instantiated twice here, since parent directories might have
     # changed
     with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
+        gtk_context.log_config()
         return_code = main(gtk_context)
 
     # clean up (might be necessary when running in a shared computing environment)
