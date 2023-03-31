@@ -63,3 +63,26 @@ def test_dry_run_works(
             tmp_path
             / "sub-TOME3024/figures/sub-TOME3024_ses-Session2_acq-MPRHA_dseg.svg"
         ).exists()
+
+
+if __name__ == "__main__":
+
+    scratch_dir = run_in_tmp_dir(gtk_context.config["gear-writable-dir"])
+
+    # Has to be instantiated twice here, since parent directories might have
+    # changed
+    with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
+        gtk_context.log_config()
+        return_code = main(gtk_context)
+
+    # clean up (might be necessary when running in a shared computing environment)
+    if scratch_dir:
+        log.debug("Removing scratch directory")
+        for thing in scratch_dir.glob("*"):
+            if thing.is_symlink():
+                thing.unlink()  # don't remove anything links point to
+                log.debug("unlinked %s", thing.name)
+        shutil.rmtree(scratch_dir)
+        log.debug("Removed %s", scratch_dir)
+
+    sys.exit(return_code)

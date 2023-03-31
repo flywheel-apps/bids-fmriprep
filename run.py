@@ -371,16 +371,29 @@ def main(gtk_context):
     else:
         log.info("Keeping fsaverage directories")
 
-    # zip entire output/<analysis_id> folder into
-    #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
-    zip_file_name = gear_name + f"_{run_label}_{destination_id}.zip"
-    zip_output(
-        str(output_dir),
-        destination_id,
-        zip_file_name,
-        dry_run=False,
-        exclude_files=None,
-    )
+    if config.get("gear-save-output-as-subfolders"):
+        # zip entire output/<analysis_id> folder into
+        #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
+        zip_file_name = gear_name + f"_{run_label}_{destination_id}.zip"
+        zip_output(
+            str(output_dir),
+            destination_id,
+            zip_file_name,
+            dry_run=False,
+            exclude_files=None,
+        )
+
+    else:
+        # zip entire output/<analysis_id> folder into
+        #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
+        zip_file_name = gear_name + f"_{run_label}_{destination_id}.zip"
+        zip_output(
+            str(output_dir),
+            destination_id,
+            zip_file_name,
+            dry_run=False,
+            exclude_files=None,
+        )
 
     # Make archives for result *.html files for easy display on platform
     zip_htmls(output_dir, destination_id, output_analysis_id_dir / BIDS_APP)

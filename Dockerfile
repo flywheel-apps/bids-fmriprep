@@ -32,14 +32,14 @@ COPY manifest.json ${FLYWHEEL}/manifest.json
 COPY utils ${FLYWHEEL}/utils
 COPY run.py ${FLYWHEEL}/run.py
 RUN chmod a+x ${FLYWHEEL}/run.py
+COPY run.sh ${FLYWHEEL}/run.sh
+RUN chmod a+x ${FLYWHEEL}/run.sh
 
 # Set up python to run Flywheel SDK isolated from whatever is in the base image
 RUN conda create -n py38 python=3.8.10 -c anaconda -y
 RUN . /usr/local/miniconda/etc/profile.d/conda.sh && \
     conda activate py38 && \
-    pip install --no-cache-dir -r $FLYWHEEL/requirements.txt && \
-    pip --version && \
-    pip list > $FLYWHEEL/pip_list.txt
+    pip install --no-cache-dir -r $FLYWHEEL/requirements.txt
 
-# Configure entrypoint
-ENTRYPOINT ["/flywheel/v0/run.py"]
+# Configure entrypoint (run.sh activates gear code environment then runs run.py)
+ENTRYPOINT ["/flywheel/v0/run.sh"]

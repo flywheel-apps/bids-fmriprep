@@ -6,9 +6,11 @@ COPY requirements-dev.txt $FLYWHEEL/
 
 RUN . /usr/local/miniconda/etc/profile.d/conda.sh && \
     conda activate py38 && \
-    pip install --no-cache-dir -r $FLYWHEEL/requirements-dev.txt && \
-    pip --version && \
-    pip list > $FLYWHEEL/pip_list_test.txt
+    pip install --no-cache-dir -r $FLYWHEEL/requirements-dev.txt
+
+# Activate conda in py38 whenever this container is started
+Run echo ". /usr/local/miniconda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate py38" >> ~/.bashrc
 
 COPY tests ./tests
 
