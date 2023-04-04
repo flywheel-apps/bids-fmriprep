@@ -416,14 +416,8 @@ def main(gtk_context):
 
     # clean up: remove output that was zipped
     if Path(output_analysis_id_dir).exists():
-        if not config.get("gear-keep-output"):
-
-            log.debug('removing output directory "%s"', str(output_analysis_id_dir))
-            shutil.rmtree(output_analysis_id_dir)
-
-        else:
-            log.info('NOT removing output directory "%s"', str(output_analysis_id_dir))
-
+        log.debug('removing output directory "%s"', str(output_analysis_id_dir))
+        shutil.rmtree(output_analysis_id_dir)
     else:
         log.info("Output directory does not exist so it cannot be removed")
 

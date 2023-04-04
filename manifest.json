@@ -132,11 +132,6 @@
             "description": "Keep freesurfer/fsaverage* directories in output.  These are copied from the freesurfer installation.  Default is to delete them",
             "type": "boolean"
         },
-        "gear-keep-output": {
-            "default": false,
-            "description": "Don't delete output.  Output is always zipped into a single file for easy download.  Choose this option to prevent output deletion after zipping.",
-            "type": "boolean"
-        },
         "gear-log-level": {
             "default": "INFO",
             "description": "Gear Log verbosity level (INFO|DEBUG)",
