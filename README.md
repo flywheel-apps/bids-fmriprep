@@ -70,7 +70,7 @@ Gear argument: Run bids-validator after downloading BIDS formatted data.  Defaul
 Gear argument: Gear Log verbosity level (ERROR|WARNING|INFO|DEBUG)
 
 ### gear-log-to-file (optional)
-Gear argument: Instead of logging in real time, save log output of fMRIPrep to the file output/log#.txt (where # is 1 or 2 depending on how many times fMRIPrep was run.
+Gear argument: Instead of logging in real time, save log output of fMRIPrep to the file output/log#.txt (where # is 1 or 2 depending on how many times fMRIPrep was run).
 
 ### gear-save-intermediate-output (optional)
 Gear argument: The BIDS App is run in a "work/" directory.  Setting this will save ALL
@@ -157,7 +157,9 @@ Depending upon your fMRIPrep workflow preferences, a variety of metadata and fil
 
 - Each functional NIfTI needs the following metadata: `EchoTime`, `EffectiveEchoSpacing`, `PhaseEncodingDirection`,`RepetitionTime`, `SliceTiming`, and `TaskName`.
 
-## Dev notes
+## Development Notes
+
+### Omitted fMRIPrep Options
 The following command line options are deliberately omitted,
 as they are either handled internally or cannot be implemented.
 
@@ -168,3 +170,20 @@ as they are either handled internally or cannot be implemented.
 --fs-license-file
 --work-dir
 --clean-workdir
+
+### Contributing
+
+This repository will eventually be moved to GitHub and will use Flywheel's best practices for gears.  It is currently in an intermediate state between old development practices and the new ones.  The goal is towards this [Best Practice](https://gitlab.com/flywheel-io/scientific-solutions/gears/templates/skeleton/-/blob/main/CONTRIBUTING.md) where poetry and pre-commit are used with GitLab CI.  Previously, this gear was designed from the [bids-app-template](https://gitlab.com/flywheel-io/scientific-solutions/gears/templates/bids-app-template/-/blob/main/README.md).  The old template relied on scripts in `./tests/bin/` to build the gear and do testing inside the running gear. That is the old template and a new one will be developed soon.  No work should be done in this repository towards the new best practices until that new template has been created.
+
+Curently, the following steps should be used when contributing to the development of this repository.
+
+* Clone the repository and install poetry and pre-commit.
+* Run `poetry install` to install the dependencies.
+* Run `./tests/bin/poetry_export.sh` to create the requirements.txt files.
+* Pre-commit hooks will run some linters, etc. when you commit changes to the repository.
+* To build the gear and run tests inside the gear use `./tests/bin/run_tests.sh`.  To understand how code can be edited and tested inside the gear without re-building it, see [bids-app-template](https://gitlab.com/flywheel-io/scientific-solutions/gears/templates/bids-app-template/-/blob/main/README.md).
+* PyCharm or other debuggers can be set up to debug and run tests in the external poetry environment (not inside the running gear).
+
+The idea is to get all test to pass locally, before committing and pushing the gear to GitHub.  Some of the current tests require you to be logged in to a specific Flywheel instance (ga) and have access to some specific projects.  If you do not, those tests will be skipped.  This dependency on a live instance with specific projects will be removed in the future.
+
+This gear has two miniconda python environments in it.  One is supplied by the base fMRIPrep Docker image and the other is installed in side the Docker files.  The second environment is used to isolate the gear code from the fMRIPrep code.  In order to make that work, the original fMRIPrep environment variables are saved before creating the second python environment and installing its dependencies.  A `run.sh` script is used inside the gear to activate the gear code environment, run the gear code `run.py`, and then fMRIPrep is called as a subprocess where the original environment variables are provided.
