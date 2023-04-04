@@ -23,7 +23,8 @@ def run_in_tmp_dir(writable_dir):
             writable.
 
     Returns:
-        tmp_path (path) The path to the temporary directory so it can be deleted
+        tmp_path (path) The path to the temporary directory so it can be deleted or None if the
+            usuel /flywheel/v0 is writable.
     """
 
     running_in = ""

@@ -57,9 +57,6 @@ Zip file of existing FreeSurfer subject's directory to reuse.  If the output of 
 ### previous-results (optional)
 Provide previously calculated fMRIPrep output results zip file as in input.  This file will be unzipped into the output directory so that previous results will be used instead of re-calculating them.  This input is provided so that bids-fmriprep can be run incrementally as new data is acquired.
 
-### work-dir (optional)
-THIS IS A FUTURE OPTIONAL INPUT.  It has not yet been added.  Provide intermediate fMRIPrep results as a zip file.  This file will be unzipped into the work directory so that previous results will be used instead of re-calculating them.  This option is provided so that bids-fmriprep can be run incrementally as new data is acquired.  The zip file to provide can be produced by using the gear-save-intermediate-output configuration option.  You definitely also want to use the fs-subject-dir input (above) so that FreeSurfer won't be run multiple times.
-
 ## Config:
 Most config options are identical to those used in fmriprep, and so documentation can be found here https://fmriprep.org/en/20.2.6/usage.html.
 
@@ -71,6 +68,9 @@ Gear argument: Run bids-validator after downloading BIDS formatted data.  Defaul
 
 ### gear-log-level (optional)
 Gear argument: Gear Log verbosity level (ERROR|WARNING|INFO|DEBUG)
+
+### gear-log-to-file (optional)
+Gear argument: Instead of logging in real time, save log output of fMRIPrep to the file output/log#.txt (where # is 1 or 2 depending on how many times fMRIPrep was run.
 
 ### gear-save-intermediate-output (optional)
 Gear argument: The BIDS App is run in a "work/" directory.  Setting this will save ALL
@@ -85,12 +85,11 @@ directory.  Files are saved into "<BIDS App>_work_selected_<run label>_<analysis
 Gear argument: A space separated list of FOLDERS to retain from the intermediate work
 directory.  Files are saved into "<BIDS App>_work_selected_<run label>_<analysis id>.zip"
 
+### gear-save-output-as-subfolders (optional)
+Gear argument: Instead of a single zipped file with fMRIPrep and Freesurfer output in it, the gear will save each separately.
+
 ### gear-dry-run (optional)
 Gear argument: Do everything except actually executing the BIDS App.
-
-### gear-keep-output (optional)
-Gear argument: Don't delete output.  Output is always zipped into a single file for
-easy download.  Choose this option to prevent output deletion after zipping.
 
 ### gear-keep-fsaverage (optional)
 Keep freesurfer/fsaverage* directories in output.  These are copied from the freesurfer installation.  Default is to delete them.
@@ -98,6 +97,9 @@ Keep freesurfer/fsaverage* directories in output.  These are copied from the fre
 ### gear-FREESURFER_LICENSE (optional)
 Gear argument: Text from license file generated during FreeSurfer registration.
 Copy the contents of the license file and paste it into this argument.
+
+### gear-writable-dir (optional)
+Gear argument: Gears expect to be able to write temporary files in /flywheel/v0/.  If this location is not writable (such as when running in Singularity), this path will be used instead.  fMRIPrep creates a large number of files so this disk space should be fast and local.",
 
 ## Troubleshooting
 

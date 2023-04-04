@@ -158,7 +158,7 @@
         },
         "gear-save-output-as-subfolders": {
             "default": false,
-            "description": "Instead of a single zipped file with fMRIPrep and Freesurfer output in it, gear will save each separately.",
+            "description": "Instead of a single zipped file with fMRIPrep and Freesurfer output in it, the gear will save each separately.",
             "type": "boolean"
         },
         "gear-writable-dir": {
