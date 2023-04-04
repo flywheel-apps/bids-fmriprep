@@ -69,10 +69,7 @@ def run_in_tmp_dir(writable_dir):
 
     names = list(abs_path.glob("*"))
     for name in names:
-        if name.name == "gear_environ.json":  # always use real one, not dev
-            (new_FWV0 / name.name).symlink_to(Path(FWV0) / name.name)
-        else:
-            (new_FWV0 / name.name).symlink_to(abs_path / name.name)
+        (new_FWV0 / name.name).symlink_to(abs_path / name.name)
     os.chdir(new_FWV0)  # run in /tmp/... directory so it is writeable
     log.debug("cwd is %s", Path.cwd())
 

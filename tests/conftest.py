@@ -25,7 +25,7 @@ def install_gear():
 
         gear_tests = Path("/src/tests/data/gear_tests/")
         if not gear_tests.exists():  # fix for running in debugger (poetry and pytest)
-            gear_tests = origdir.parents[0] / "data" / "gear_tests"
+            gear_tests = origdir / "tests/data/gear_tests"
         print("\nRemoving previous gear...")
 
         for file_name in [

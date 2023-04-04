@@ -163,7 +163,7 @@
         },
         "gear-save-output-as-subfolders": {
             "default": false,
-            "description": "Instead of a single zipped file with fMRIPrep and Freesurfer output in it, gear will save each separately: fmriprep_work_*.zip",
+            "description": "Instead of a single zipped file with fMRIPrep and Freesurfer output in it, gear will save each separately.",
             "type": "boolean"
         },
         "gear-writable-dir": {
@@ -318,13 +318,13 @@
         }
     },
     "custom": {
-        "docker-image": "flywheel/bids-fmriprep:1.4.2_20.2.7rc8",
+        "docker-image": "flywheel/bids-fmriprep:1.4.2_20.2.7rc9",
         "flywheel": {
             "suite": "BIDS Apps"
         },
         "gear-builder": {
             "category": "analysis",
-            "image": "flywheel/bids-fmriprep:1.4.2_20.2.7rc8"
+            "image": "flywheel/bids-fmriprep:1.4.2_20.2.7rc9"
         },
         "license": {
             "dependencies": [
@@ -436,5 +436,5 @@
     "name": "bids-fmriprep",
     "source": "https://github.com/nipreps/fmriprep",
     "url": "https://github.com/flywheel-apps/bids-fmriprep/blob/master/README.md",
-    "version": "1.4.2_20.2.7rc8"
+    "version": "1.4.2_20.2.7rc9"
 }

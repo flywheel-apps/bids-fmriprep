@@ -39,20 +39,28 @@ def test_wet_run_errors(
         captured = capfd.readouterr()
         print_captured(captured)
 
+        gear_tests = Path("/src/tests/data/gear_tests/")
+        if gear_tests.exists():  # then we are running in the container
+            running_in_container = True
+        else:
+            running_in_container = False
+
         assert status == 1
         assert search_caplog(caplog, "sub-TOME3024_ses-Session2_acq-MPRHA_T1w.nii.gz")
         assert search_caplog(caplog, "Not running BIDS validation")
         assert search_caplog(caplog, "Unable to execute command")
-        assert search_caplog(caplog, "RuntimeError: No BOLD images found")
+        if running_in_container:
+            assert search_caplog(caplog, "RuntimeError: No BOLD images found")
         # Make sure "=" is not after "--ignore"
         assert search_caplog_contains(
             caplog, "command is:", "--ignore fieldmaps slicetiming"
         )
 
-        meta_file = Path.cwd() / "output/.metadata.json"
-        assert meta_file.exists()
-        with open(meta_file) as json_file:
-            metadata = json.load(json_file)
+    meta_file = Path.cwd() / "output/.metadata.json"
+    assert meta_file.exists()
+    with open(meta_file) as json_file:
+        metadata = json.load(json_file)
+        if running_in_container:
             assert (
                 "Elapsed (wall clock) time (h:mm:ss or m:ss)"
                 in metadata["analysis"]["info"]["resources used"]

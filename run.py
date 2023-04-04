@@ -336,11 +336,7 @@ def main(gtk_context):
     # Save time, etc. resources used in metadata on analysis
     if Path("time_output.txt").exists():  # some tests won't have this file
         metadata = {
-            "analysis": {
-                "info": {
-                    "resources used": {},
-                },
-            },
+            "resources used": {},
         }
         with open("time_output.txt") as file:
             for line in file:
@@ -354,10 +350,10 @@ def main(gtk_context):
                         sline = line.split(":")
                     key = sline[0].strip()
                     val = sline[1].strip(' "\n')
-                    metadata["analysis"]["info"]["resources used"][key] = val
-        with open(f"{output_dir}/.metadata.json", "w") as fff:
-            json.dump(metadata, fff)
-            log.info(f"Wrote {output_dir}/.metadata.json")
+                    metadata["resources used"][key] = val
+        gtk_context.metadata.update_container(
+            gtk_context.destination["type"], info=metadata
+        )
 
     # Cleanup, move all results to the output directory
 
@@ -372,17 +368,20 @@ def main(gtk_context):
         log.info("Keeping fsaverage directories")
 
     if config.get("gear-save-output-as-subfolders"):
-        # zip entire output/<analysis_id> folder into
-        #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
-        zip_file_name = gear_name + f"_{run_label}_{destination_id}.zip"
-        zip_output(
-            str(output_dir),
-            destination_id,
-            zip_file_name,
-            dry_run=False,
-            exclude_files=None,
-        )
-
+        # zip output/<analysis_id>/fmriprep folder into
+        #  <gear_name>_<project|subject|session label>_<analysis.id>_fmriprep.zip
+        # and zip output/<analysis_id>/freesurfer folder into
+        #  <gear_name>_<project|subject|session label>_<analysis.id>_freesurfer.zip
+        sub_dirs = ["fmriprep", "freesurfer"]
+        for sub_dir in sub_dirs:
+            zip_file_name = gear_name + f"_{run_label}_{destination_id}_{sub_dir}.zip"
+            zip_output(
+                str(output_dir),
+                f"{destination_id}/{sub_dir}",
+                zip_file_name,
+                dry_run=False,
+                exclude_files=None,
+            )
     else:
         # zip entire output/<analysis_id> folder into
         #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
@@ -471,6 +470,7 @@ if __name__ == "__main__":
     # Has to be instantiated twice here, since parent directories might have
     # changed
     with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
+        gtk_context.init_logging()
         gtk_context.log_config()
         return_code = main(gtk_context)
 
