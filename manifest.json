@@ -1,7 +1,7 @@
 {
     "author": "Poldrack lab, Stanford University",
     "cite": "see https://fmriprep.readthedocs.io/en/stable/citing.html",
-    "command": "poetry run python run.py",
+    "command": "/flywheel/v0/run.sh",
     "config": {
         "anat-only": {
             "default": false,
@@ -132,11 +132,6 @@
             "description": "Keep freesurfer/fsaverage* directories in output.  These are copied from the freesurfer installation.  Default is to delete them",
             "type": "boolean"
         },
-        "gear-keep-output": {
-            "default": false,
-            "description": "Don't delete output.  Output is always zipped into a single file for easy download.  Choose this option to prevent output deletion after zipping.",
-            "type": "boolean"
-        },
         "gear-log-level": {
             "default": "INFO",
             "description": "Gear Log verbosity level (INFO|DEBUG)",
@@ -159,6 +154,11 @@
         "gear-save-intermediate-output": {
             "default": false,
             "description": "Gear will save ALL intermediate output into fmriprep_work_*.zip",
+            "type": "boolean"
+        },
+        "gear-save-output-as-subfolders": {
+            "default": false,
+            "description": "Instead of a single zipped file with fMRIPrep and Freesurfer output in it, the gear will save each separately.",
             "type": "boolean"
         },
         "gear-writable-dir": {
@@ -313,13 +313,13 @@
         }
     },
     "custom": {
-        "docker-image": "flywheel/bids-fmriprep:1.4.1_20.2.7rc2",
+        "docker-image": "flywheel/bids-fmriprep:1.4.2_20.2.7rc9",
         "flywheel": {
             "suite": "BIDS Apps"
         },
         "gear-builder": {
             "category": "analysis",
-            "image": "flywheel/bids-fmriprep:1.4.1_20.2.7rc2"
+            "image": "flywheel/bids-fmriprep:1.4.2_20.2.7rc9"
         },
         "license": {
             "dependencies": [
@@ -431,5 +431,5 @@
     "name": "bids-fmriprep",
     "source": "https://github.com/nipreps/fmriprep",
     "url": "https://github.com/flywheel-apps/bids-fmriprep/blob/master/README.md",
-    "version": "1.4.1_20.2.7"
+    "version": "1.4.2_20.2.7rc9"
 }

@@ -23,7 +23,8 @@ def run_in_tmp_dir(writable_dir):
             writable.
 
     Returns:
-        tmp_path (path) The path to the temporary directory so it can be deleted
+        tmp_path (path) The path to the temporary directory so it can be deleted or None if the
+            usuel /flywheel/v0 is writable.
     """
 
     running_in = ""
@@ -66,16 +67,10 @@ def run_in_tmp_dir(writable_dir):
     log.debug("Running at path %s", new_FWV0)
 
     abs_path = Path(".").resolve()
-    if abs_path != FWV0:  # if run by pytest, we're not at the usual location
-        fmriprep_index = abs_path.parts.index("bids-fmriprep")
-        abs_path = abs_path.parents[len(abs_path.parents) - fmriprep_index - 1]
 
     names = list(abs_path.glob("*"))
     for name in names:
-        if name.name == "gear_environ.json":  # always use real one, not dev
-            (new_FWV0 / name.name).symlink_to(Path(FWV0) / name.name)
-        else:
-            (new_FWV0 / name.name).symlink_to(abs_path / name.name)
+        (new_FWV0 / name.name).symlink_to(abs_path / name.name)
     os.chdir(new_FWV0)  # run in /tmp/... directory so it is writeable
     log.debug("cwd is %s", Path.cwd())
 

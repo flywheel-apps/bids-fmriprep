@@ -123,8 +123,6 @@ def main(gtk_context):
     FWV0 = Path.cwd()
     log.info("Running gear in %s", FWV0)
 
-    gtk_context.log_config()
-
     # Errors and warnings will always be logged when they are detected.
     # Keep a list of errors and warning to print all in one place at end of log
     # Any errors will prevent the command from running and will cause exit(1)
@@ -338,11 +336,7 @@ def main(gtk_context):
     # Save time, etc. resources used in metadata on analysis
     if Path("time_output.txt").exists():  # some tests won't have this file
         metadata = {
-            "analysis": {
-                "info": {
-                    "resources used": {},
-                },
-            },
+            "resources used": {},
         }
         with open("time_output.txt") as file:
             for line in file:
@@ -356,10 +350,10 @@ def main(gtk_context):
                         sline = line.split(":")
                     key = sline[0].strip()
                     val = sline[1].strip(' "\n')
-                    metadata["analysis"]["info"]["resources used"][key] = val
-        with open(f"{output_dir}/.metadata.json", "w") as fff:
-            json.dump(metadata, fff)
-            log.info(f"Wrote {output_dir}/.metadata.json")
+                    metadata["resources used"][key] = val
+        gtk_context.metadata.update_container(
+            gtk_context.destination["type"], info=metadata
+        )
 
     # Cleanup, move all results to the output directory
 
@@ -373,16 +367,32 @@ def main(gtk_context):
     else:
         log.info("Keeping fsaverage directories")
 
-    # zip entire output/<analysis_id> folder into
-    #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
-    zip_file_name = gear_name + f"_{run_label}_{destination_id}.zip"
-    zip_output(
-        str(output_dir),
-        destination_id,
-        zip_file_name,
-        dry_run=False,
-        exclude_files=None,
-    )
+    if config.get("gear-save-output-as-subfolders"):
+        # zip output/<analysis_id>/fmriprep folder into
+        #  <gear_name>_<project|subject|session label>_<analysis.id>_fmriprep.zip
+        # and zip output/<analysis_id>/freesurfer folder into
+        #  <gear_name>_<project|subject|session label>_<analysis.id>_freesurfer.zip
+        sub_dirs = ["fmriprep", "freesurfer"]
+        for sub_dir in sub_dirs:
+            zip_file_name = gear_name + f"_{run_label}_{destination_id}_{sub_dir}.zip"
+            zip_output(
+                str(output_dir),
+                f"{destination_id}/{sub_dir}",
+                zip_file_name,
+                dry_run=False,
+                exclude_files=None,
+            )
+    else:
+        # zip entire output/<analysis_id> folder into
+        #  <gear_name>_<project|subject|session label>_<analysis.id>.zip
+        zip_file_name = gear_name + f"_{run_label}_{destination_id}.zip"
+        zip_output(
+            str(output_dir),
+            destination_id,
+            zip_file_name,
+            dry_run=False,
+            exclude_files=None,
+        )
 
     # Make archives for result *.html files for easy display on platform
     zip_htmls(output_dir, destination_id, output_analysis_id_dir / BIDS_APP)
@@ -406,14 +416,8 @@ def main(gtk_context):
 
     # clean up: remove output that was zipped
     if Path(output_analysis_id_dir).exists():
-        if not config.get("gear-keep-output"):
-
-            log.debug('removing output directory "%s"', str(output_analysis_id_dir))
-            shutil.rmtree(output_analysis_id_dir)
-
-        else:
-            log.info('NOT removing output directory "%s"', str(output_analysis_id_dir))
-
+        log.debug('removing output directory "%s"', str(output_analysis_id_dir))
+        shutil.rmtree(output_analysis_id_dir)
     else:
         log.info("Output directory does not exist so it cannot be removed")
 
@@ -454,11 +458,14 @@ if __name__ == "__main__":
 
     # make sure /flywheel/v0 is writable, use a scratch directory if not
     with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
+        gtk_context.log_config()
         scratch_dir = run_in_tmp_dir(gtk_context.config["gear-writable-dir"])
 
     # Has to be instantiated twice here, since parent directories might have
     # changed
     with flywheel_gear_toolkit.GearToolkitContext() as gtk_context:
+        gtk_context.init_logging()
+        gtk_context.log_config()
         return_code = main(gtk_context)
 
     # clean up (might be necessary when running in a shared computing environment)

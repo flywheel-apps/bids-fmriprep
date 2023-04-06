@@ -34,7 +34,7 @@ def test_fs_subjects_dir_works(
         status = run.main(gtk_context)
 
         assert status == 0
-        assert search_caplog(caplog, 'Input file "fs-subjects-dir" is')
+        assert search_caplog(caplog, "Using provided Freesurfer subject file")
         # make sure freesurfer subject made it
         assert (
             FWV0 / "freesurfer/subjects/sub-TOME3024/scripts/recon-all.log"

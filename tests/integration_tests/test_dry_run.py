@@ -8,6 +8,7 @@ import flywheel_gear_toolkit
 from flywheel_gear_toolkit.utils.zip_tools import unzip_archive
 
 import run
+from utils.singularity import run_in_tmp_dir
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +32,6 @@ def test_dry_run_works(
     install_gear("dry_run.zip")
 
     with flywheel_gear_toolkit.GearToolkitContext(input_args=[]) as gtk_context:
-
         status = run.main(gtk_context)
 
         assert status == 0
@@ -63,3 +63,11 @@ def test_dry_run_works(
             tmp_path
             / "sub-TOME3024/figures/sub-TOME3024_ses-Session2_acq-MPRHA_dseg.svg"
         ).exists()
+
+        paths = list(FWV0.glob("output/bids-fmriprep_*.zip"))
+        output_zips = [p.name for p in paths]
+        output_zips.sort()
+        assert "_fmriprep.zip" in output_zips[0]
+        assert "_freesurfer.zip" in output_zips[1]
+        assert "fmriprep_work_2020" in output_zips[2]
+        assert "fmriprep_work_selected" in output_zips[3]

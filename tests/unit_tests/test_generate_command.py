@@ -6,6 +6,8 @@ import flywheel_gear_toolkit
 
 from run import generate_command
 
+log = logging.getLogger(__name__)
+
 
 def test_generate_command_missing_config_works(
     capfd, print_captured, search_stdout_contains
@@ -14,7 +16,6 @@ def test_generate_command_missing_config_works(
     with flywheel_gear_toolkit.GearToolkitContext(input_args=[]) as gtk_context:
         gtk_context.init_logging("info")
         gtk_context.log_config()
-        log = gtk_context.log
 
         config = {
             "bids_app_args": "arg1 arg2 bad_arg",

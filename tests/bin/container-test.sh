@@ -21,7 +21,7 @@ main() {
     CACHE=""
     DOCKERFILE="tests/Dockerfile"
     DOCKER_TAG="testing"
-    ENTRY_POINT="--entrypoint=/src/tests/bin/poetry_test.sh"
+    ENTRY_POINT="--entrypoint=/src/tests/bin/tests.sh"
     SINGULARITY_CMD="run"
     RUN="Docker"
     while [ $# -gt 0 ]; do
@@ -66,11 +66,11 @@ main() {
     if [ "${BUILD_IMAGE}" = "1" ]; then
 
 	set -x
-        docker build -f Dockerfile -t "${DOCKER_IMAGE_NAME}" .
+        docker build -f Dockerfile -t "${DOCKER_IMAGE_NAME}" . --progress=plain &> build.log
 
         docker build -f "${DOCKERFILE}" \
           --build-arg DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME} \
-          -t "${TESTING_IMAGE}" .
+          -t "${TESTING_IMAGE}" . --progress=plain &> build_test.log
 	set +x
 
         if [ "$RUN" = "Singularity" ]; then

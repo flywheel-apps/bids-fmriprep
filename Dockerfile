@@ -26,22 +26,20 @@ RUN npm install -g bids-validator@1.8.4 \
     esbuild@0.13.4 \
     esbuild-runner@2.2.1
 
-# Python 3.7.1 (default, Dec 14 2018, 19:28:38)
-# [GCC 7.3.0] :: Anaconda, Inc. on linux
-RUN pip install poetry && \
-    rm -rf /root/.cache/pip
+COPY requirements.txt $FLYWHEEL/
 
-
-COPY poetry.lock pyproject.toml $FLYWHEEL/
-RUN poetry install --no-dev
-
-ENV PYTHONUNBUFFERED 1
-
-# Copy executable/manifest to Gear
 COPY manifest.json ${FLYWHEEL}/manifest.json
 COPY utils ${FLYWHEEL}/utils
 COPY run.py ${FLYWHEEL}/run.py
-
-# Configure entrypoint
 RUN chmod a+x ${FLYWHEEL}/run.py
-ENTRYPOINT ["/flywheel/v0/run.py"]
+COPY run.sh ${FLYWHEEL}/run.sh
+RUN chmod a+x ${FLYWHEEL}/run.sh
+
+# Set up python to run Flywheel SDK isolated from whatever is in the base image
+RUN conda create -n py38 python=3.8.10 -c anaconda -y
+RUN . /usr/local/miniconda/etc/profile.d/conda.sh && \
+    conda activate py38 && \
+    pip install --no-cache-dir -r $FLYWHEEL/requirements.txt
+
+# Configure entrypoint (run.sh activates gear code environment then runs run.py)
+ENTRYPOINT ["/flywheel/v0/run.sh"]
