@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bids-fmriprep"
-version = "1.4.2+20.2.7"
+version = "1.4.3+23.0.1"
 description = ""
 authors = ["Flywheel <support@flywheel.io>"]
 license = "BSD-3-Clause"
