@@ -1,4 +1,4 @@
-colorama==0.4.6 ; sys_platform == "win32" and python_full_version == "3.8.10"
+colorama==0.4.6 ; python_full_version == "3.8.10" and sys_platform == "win32"
 coverage==7.2.2 ; python_full_version == "3.8.10"
 exceptiongroup==1.1.1 ; python_full_version == "3.8.10"
 iniconfig==2.0.0 ; python_full_version == "3.8.10"

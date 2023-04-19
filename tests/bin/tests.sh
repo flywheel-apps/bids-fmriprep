@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-. /usr/local/miniconda/etc/profile.d/conda.sh
-conda activate py38
-
 set -eu
 unset CDPATH
 

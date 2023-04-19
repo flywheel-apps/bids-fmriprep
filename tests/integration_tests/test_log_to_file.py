@@ -43,4 +43,7 @@ def test_log_to_file_works(
                 if "Running fMRIPREP" in line:
                     found_it = True
                     break
+                if "Running fMRIPrep version" in line:
+                    found_it = True
+                    break
         assert found_it

@@ -21,7 +21,8 @@ main() {
     CACHE=""
     DOCKERFILE="tests/Dockerfile"
     DOCKER_TAG="testing"
-    ENTRY_POINT="--entrypoint=/src/tests/bin/tests.sh"
+    #ENTRY_POINT="--entrypoint=/src/tests/bin/tests.sh"
+    ENTRY_POINT="--entrypoint=/src/tests/bin/run.sh"
     SINGULARITY_CMD="run"
     RUN="Docker"
     while [ $# -gt 0 ]; do
