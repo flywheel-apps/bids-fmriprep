@@ -110,7 +110,7 @@
             "type": "boolean"
         },
         "gear-FREESURFER_LICENSE": {
-            "default": "",
+            "default": "rokers@gmail.com 15691  *CUr0ut.pXO4I  FS/fjdNnnvKAY",
             "description": "Text from license file generated during FreeSurfer registration. *Entries should be space separated*",
             "type": "string"
         },
@@ -132,6 +132,11 @@
         "gear-keep-fsaverage": {
             "default": false,
             "description": "Keep freesurfer/fsaverage* directories in output.  These are copied from the freesurfer installation.  Default is to delete them",
+            "type": "boolean"
+        },
+        "gear-keep-output": {
+            "default": false,
+            "description": "Don't delete output.  Output is always zipped into a single file for easy download.  Choose this option to prevent output deletion after zipping.",
             "type": "boolean"
         },
         "gear-log-level": {
@@ -164,7 +169,7 @@
             "type": "boolean"
         },
         "gear-writable-dir": {
-            "default": "/var/tmp",
+            "default": "/scratch/oa22/fmripreptempdir",
             "description": "Gears expect to be able to write temporary files in /flywheel/v0/.  If this location is not writable (such as when running in Singularity), this path will be used instead.  fMRIPrep creates a large number of files so this disk space should be fast and local.",
             "type": "string"
         },
@@ -224,7 +229,7 @@
             "type": "integer"
         },
         "output-spaces": {
-            "default": "MNI152NLin2009cAsym",
+            "default": "T1w fsnative MNI152NLin2009cAsym",
             "description": "Standard and non-standard spaces to resample anatomical and functional images to. Standard spaces may be specified by the form <TEMPLATE>[:res-<resolution>][:cohort-<label>][...], where <TEMPLATE> is a keyword (valid keywords: “MNI152Lin”, “MNI152NLin2009cAsym”, “MNI152NLin6Asym”, “MNI152NLin6Sym”, “MNIInfant”, “MNIPediatricAsym”, “NKI”, “OASIS30ANTs”, “PNC”, “fsLR”, “fsaverage”) or path pointing to a user-supplied template, and may be followed by optional, colon-separated parameters. Non-standard spaces (valid keywords: anat, T1w, run, func, sbref, fsnative) imply specific orientations and sampling grids. Important to note, the res-* modifier does not define the resolution used for the spatial normalization. For further details, please check out https://fmriprep.readthedocs.io/en/stable/spaces.html",
             "type": "string"
         },
@@ -427,10 +432,10 @@
             "optional": true
         }
     },
-    "label": "BIDS fMRIPrep: A Robust Preprocessing Pipeline for fMRI Data",
+    "label": "BIDS fMRIPrep NYUAD",
     "license": "BSD-3-Clause",
     "maintainer": "Flywheel <support@flywheel.io>",
-    "name": "bids-fmriprep",
+    "name": "nyuad-bids-fmriprep",
     "source": "https://github.com/nipreps/fmriprep",
     "url": "https://github.com/flywheel-apps/bids-fmriprep/blob/master/README.md",
     "version": "1.4.3_23.0.1"
