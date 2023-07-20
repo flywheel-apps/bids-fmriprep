@@ -24,4 +24,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.codespell]
 skip = '.git,*.pdf,*.svg'
 #
-# ignore-words-list = ''
+ignore-words-list = 'afile'
