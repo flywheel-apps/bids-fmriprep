@@ -9,7 +9,7 @@ more recent versions of fMRIPrep such as 21.x.x-23.x.x.
 ## Overview
 This gear can only be run on datasets that have been BIDS curated and can pass the tests of the [BIDS Validator](https://github.com/bids-standard/bids-validator).  fMRIPrep requires that your dataset include at least one T1w structural image.  It can include multiple T1 images, a T2 image and some number of BOLD series. This data must have its DICOMS classified with our classifier gear, and converted to nifti files with our dcm2niix gear, in that order.  There are additional requirements as described under "Troubleshooting" below.
 
-This Gear requires a (free) Freesurfer license. The license can be provided to the Gear in 3 ways. See [How to include a Freesurfer license file](https://docs.flywheel.io/hc/en-us/articles/360013235453).
+This Gear requires a (free) Freesurfer license. The license can be provided to the Gear in 3 ways. See [How to include a Freesurfer license file](https://docs.flywheel.io/User_Guides/user_freesurfer_license_file_to_run_a_freesurfer_or_fmriprep_gear/).
 
 The bids-fmriprep Gear can run at the project, subject or session level.  Because files are in the BIDS format, all the proper files will be used for the given session, subject, or separately, by subject, for the whole project.
 
